@@ -1,15 +1,13 @@
-.*/
 node_modules/
 out/
 dist/
 npm-debug.log
-/*.vsix
-/*.vsix.zip
+*.vsix
+*.vsix.zip
 logs/
 /data/
 notes.md
 /coverage/
 **/.tmp/
 comments.json
-
 .DS_Store

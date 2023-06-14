@@ -32,7 +32,7 @@
   "files": [],
   "scripts": {
     "clean": "rm -rf ./dist/* && rm *.vsix",
-    "package": "vsce package",
+    "package": "vsce package -o out/",
     "vscode:prepublish": "npm run esbuild-node -- --minify",
     "compile": "tsc -p ./",
     "esbuild-node": "esbuild ./src/extension.ts --bundle --outdir=dist --external:vscode --external:jsonc-parser --external:node-graphviz --format=cjs --platform=node",

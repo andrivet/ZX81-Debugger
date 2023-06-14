@@ -1,0 +1,61 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "dezog",
+            "request": "launch",
+            "name": "zsim: lis file",
+            "remoteType": "zsim",
+            "zsim": {
+                "visualMemory": true,
+            },
+            "z88dk": [
+                {
+                    "path": "main.lis",
+                    "mainFile": "main.asm",
+                    "dirs": [], // list file mode
+                    "mapFile": "main.map",
+                    "version": "1"
+                }
+            ],
+            "rootFolder": "${workspaceFolder}",
+            "loadObjs": [
+                {
+                    "path": "main.bin",
+                    "start": "0x8000"
+                }
+            ],
+            "execAddress": "0x8000",
+        },
+
+
+        {
+            "type": "dezog",
+            "request": "launch",
+            "name": "zsim: src mode",
+            "remoteType": "zsim",
+            "zsim": {
+                "visualMemory": true,
+            },
+            "z88dk": [
+                {
+                    "path": "main.lis",
+                    "mainFile": "main.asm",
+                    "dirs": [
+                        ""
+                    ], // source mode
+                    "mapFile": "main.map",
+                    "version": "1"
+                }
+            ],
+            "rootFolder": "${workspaceFolder}",
+            "loadObjs": [
+                {
+                    "path": "main.bin",
+                    "start": "0x8000"
+                }
+            ],
+            "execAddress": "0x8000",
+        }
+    ]
+}
