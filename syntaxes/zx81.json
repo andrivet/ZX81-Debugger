@@ -1,0 +1,107 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "zx81",
+    "scopeName": "source.zx81",
+    "patterns": [
+        {
+            "name": "comment.line",
+            "begin": ";",
+            "end": "\\n"
+        },
+        {
+            "name":"comment.line.double-slash",
+            "begin": "//",
+            "end": "\\n"
+        },
+        {
+            "name": "string.quoted.double",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape",
+                    "match": "\\\\[\"\\\\]"
+                }
+            ]
+        },
+        {
+            "name": "constant.numeric.binary",
+            "match": "%[01]+"
+        },
+        {
+            "name": "constant.numeric.binary",
+            "match": "[01]+[bB]"
+        },
+        {
+            "name": "constant.numeric.binary",
+            "match": "\\0[bB][01]+"
+        },
+        {
+            "name": "constant.numeric.hexadecimal",
+            "match": "[\\$#][0-9a-fA-F]+"
+        },
+        {
+            "name": "constant.numeric.hexadecimal",
+            "match": "0[xX][0-9a-fA-F]+"
+        },
+        {
+            "name": "constant.numeric.hexadecimal",
+            "match": "[0-9a-fA-F]+[hH]"
+        },
+        {
+            "name": "constant.numeric.octal",
+            "match": "0[qQoO][0-7]+"
+        },
+        {
+            "name": "constant.numeric.octal",
+            "match": "[0-7]+[qQoO]"
+        },
+        {
+            "name": "constant.numeric.decimal",
+            "match": "\\-?[0-9]+d?\\b"
+        },
+        {
+            "name": "support.variable",
+            "match": "\\b(?i:[abcdefhlir]|ix|iy|af'?|bc|de|hl|pc|sp)\\b"
+        },
+        {
+            "name": "keyword.control",
+            "match": "\\b\\.?(?i:equ|eq|org|include|output|device|defs|defw|db|dm|byte|defb|defm|dw|word|defw|block|defs|ds)\\b"
+        },
+        {
+            "name": "keyword.other",
+            "match": "\\b(?i:ld|push|pop|exx|ex|ldir?|lddr?|cpir?cpdr?)\\b"
+        },
+        {
+            "name": "keyword.other",
+            "match": "\\b(?i:add|adc|sub|sbc|and|or|xor|cp|inc|dec|daa|cpl|neg|ccf|scf)\\b"
+        },
+        {
+            "name": "keyword.other",
+            "match": "\\b(?i:nop|halt|di|ei)\\block"
+        },
+        {
+            "name": "keyword.other",
+            "match": "\\b(?i:rlc?a|rrc?a|rra|rlc?|rrc?|sla|sra|srl|rld|rrd|bit|set|res)\\b"
+        },
+        {
+            "match": "\\b(?i:(j[pr]|call|ret)(?:\\s+(?i:([zcmp]|n[zc]|p[eo]?|m)))?)\\b",
+            "captures": {
+                "1": {"name": "keyword.other"},
+                "2": {"name": "keyword.operator"}
+            }
+        },
+        {
+            "name": "keyword.other",
+            "match": "\\b(?i:djnz|call|ret[in]|rst)\\b"
+        },
+        {
+            "name": "keyword.other",
+            "match": "\\b(?i:in[id]?|inir|indr|out[id]?|otir|otdr)\\b"
+        },
+        {
+            "name": "variable.other.label",
+            "match": "(?i:[a-z_][a-z0-9_!\\?#@\\.]*)\\:?"
+        }
+    ]
+}

@@ -1,0 +1,608 @@
+{
+  "name": "zx81-debugger",
+  "displayName": "ZX81 Debugger",
+  "version": "1.0.0",
+  "publisher": "andrivet",
+  "description": "Visual Studio Code Debugger for the ZX81.",
+  "author": {
+    "name": "Sebastien Andrivet"
+  },
+  "license": "GPLv3",
+  "pricing": "Free",
+  "categories": [
+    "Programming Languages",
+    "Debuggers"
+  ],
+  "keywords": [
+    "z80",
+    "zx81",
+    "assembler",
+    "cebuggers"
+  ],
+  "engines": {
+    "vscode": ">=1.74.0",
+    "node": ">=16.14.0"
+  },
+  "icon": "assets/icon.png",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andrivet/ZX81-Debugger"
+  },
+  "files": [],
+  "scripts": {
+    "clean": "rm -rf ./dist/* && rm *.vsix",
+    "package": "vsce package",
+    "vscode:prepublish": "npm run esbuild-node -- --minify",
+    "compile": "tsc -p ./",
+    "esbuild-node": "esbuild ./src/extension.ts --bundle --outdir=dist --external:vscode --external:jsonc-parser --external:node-graphviz --format=cjs --platform=node",
+    "watch-tsc": "tsc -w -p ./",
+    "watch-node": "npm run esbuild-node -- --sourcemap --watch",
+    "test": "mocha -u tdd ./out/tests/ --exit"
+  },
+  "dependencies": {
+    "@andrivet/z80-assembler": "1.0.0",
+    "@bartificer/human-join": "^1.1.3",
+    "@vscode/debugadapter": "^1.57.0",
+    "@vscode/debugprotocol": "^1.57.0",
+    "fast-glob": "^3.2.12",
+    "jsonc-parser": "^3.2.0",
+    "leader-line": "^1.0.7",
+    "minimatch": "^9.0.1",
+    "node-graphviz": "^0.1.1",
+    "node-gzip": "^1.1.2"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^18.8.2",
+    "@types/vscode": "^1.71.0",
+    "@types/vscode-webview": "^1.57.0",
+    "esbuild": "^0.17.10",
+    "mocha": "^10.2.0",
+    "source-map-support": "^0.5.21",
+    "typescript": "^5.1.3"
+  },
+  "bugs": {
+    "url": "https://github.com/andrivet/ZX81-Debugger/issues"
+  },
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "ZX81 Debugger Configuration",
+      "properties": {
+        "zx81debugger.log.global": {
+          "description": "Write global logs to an output panel.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": false
+        },
+        "zx81debugger.log.transport": {
+          "description": "Write transport logs (socket, serial, etc.) to an output panel.",
+          "type": "boolean",
+          "scope": "resource",
+          "default": false
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "asm-zx81",
+        "extensions": [".zx81", ".asm", ".z80"],
+        "aliases": ["ZX81 Assembler File"]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "asm-zx81",
+        "scopeName": "source.zx81",
+        "path": "./syntaxes/zx81.json"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "asm-zx81"
+      }
+    ],
+    "commands": [
+      {
+        "command": "zx81debugger.movePCtoCursor",
+        "title": "ZX81: Move Program Counter to Cursor",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.clearAllDecorations",
+        "title": "ZX81: Clear all decorations",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.disassemblyAtCursor.code",
+        "title": "ZX81: Code",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.disassemblyAtCursor.data",
+        "title": "ZX81: Data",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.disassemblyAtCursor.string",
+        "title": "ZX81: String",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.analyzeAtCursor.disassembly",
+        "title": "ZX81: Smart Disassembly",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.analyzeAtCursor.flowChart",
+        "title": "ZX81: Flow Chart",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.analyzeAtCursor.callGraph",
+        "title": "ZX81: Call Graph",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.disassembly.refresh",
+        "title": "ZX81: Refresh disassembly",
+        "category": "ZX81 Debugger",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "zx81debugger.createNewFile",
+        "title": "New ZX81 Assembly File",
+        "shortTitle": "ZX81 Assembly File",
+        "category": "ZX81 Debugger"
+      },
+      {
+        "command": "zx81debugger.pasteExample",
+        "title": "Insert an example of ZX81 Assembly File",
+        "shortTitle": "Example ZX81 Assembly File",
+        "category": "ZX81 Debugger"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "zx81debugger.movePCtoCursor",
+          "when": "false"
+        },
+        {
+          "command": "zx81debugger.disassemblyAtCursor.code",
+          "when": "false"
+        },
+        {
+          "command": "zx81debugger.disassemblyAtCursor.data",
+          "when": "false"
+        },
+        {
+          "command": "zx81debugger.disassemblyAtCursor.string",
+          "when": "false"
+        },
+        {
+          "command": "zx81debugger.analyzeAtCursor.disassembly",
+          "when": "false"
+        },
+        {
+          "command": "zx81debugger.analyzeAtCursor.flowChart",
+          "when": "false"
+        },
+        {
+          "command": "zx81debugger.analyzeAtCursor.callGraph",
+          "when": "false"
+        },
+        {
+          "command": "zx81debugger.disassembly.refresh",
+          "when": "false"
+        },
+        {
+          "command": "zx81debugger.clearAllDecorations"
+        }
+      ],
+      "editor/context": [
+        {
+          "when": "inDebugMode && resourceLangId == asm-zx81",
+          "command": "zx81debugger.movePCtoCursor",
+          "group": "debug"
+        },
+        {
+          "when": "inDebugMode && resourceLangId == asm-zx81",
+          "submenu": "zx81debugger.disassemblyAtCursor",
+          "group": "debug"
+        },
+        {
+          "when": "inDebugMode && resourceLangId == asm-zx81",
+          "submenu": "zx81debugger.analyzeAtCursor",
+          "group": "debug"
+        }
+      ],
+      "file/newFile": [
+        {
+          "command": "zx81debugger.createNewFile",
+          "group": "file"
+        }
+      ],
+      "zx81debugger.disassemblyAtCursor": [
+        {
+          "command": "zx81debugger.disassemblyAtCursor.code"
+        },
+        {
+          "command": "zx81debugger.disassemblyAtCursor.data"
+        },
+        {
+          "command": "zx81debugger.disassemblyAtCursor.string"
+        }
+      ],
+      "zx81debugger.analyzeAtCursor": [
+        {
+          "command": "zx81debugger.analyzeAtCursor.disassembly"
+        },
+        {
+          "command": "zx81debugger.analyzeAtCursor.flowChart"
+        },
+        {
+          "command": "zx81debugger.analyzeAtCursor.callGraph"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "zx81debugger.disassemblyAtCursor",
+        "label": "ZX81: Disassembly at Cursor / of Selection"
+      },
+      {
+        "id": "zx81debugger.analyzeAtCursor",
+        "label": "ZX81: Analyze at Cursor"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "zx81debugger",
+        "label": "ZX81 Debugger",
+        "program": "./dist/src/debugadapter.js",
+        "runtime": "node",
+        "languages": [
+          "asm-zx81"
+          ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "remoteType": {
+                "enum": ["zsim"],
+                "description": "The kind of simulator to use: 'zsim' for the internal ZX81 simulator.",
+                "default": "zsim"
+              },
+              "zrcp": {
+                "description": "The configuration for the ZEsarUX emulator.",
+                "type": "object",
+                "properties": {
+                  "hostname": {
+                    "type": "string",
+                    "description": "The hostname/IP address of the ZEsarUX Emulator.",
+                    "default": "localhost"
+                  },
+                  "port": {
+                    "type": "number",
+                    "description": "The port of the ZEsarUX Emulator."
+                  },
+                  "loadDelay": {
+                    "type": "number",
+                    "description": "An additional delay before the assembler program is loaded in ZEsarUX. Use this only if you have problems starting the debug session on Windows. Default: 100ms on Windows, 0ms on other systems."
+                  },
+                  "skipInterrupt": {
+                    "type": "boolean",
+                    "description": "Skips the interrupt during stepping. Defaults to false."
+                  },
+                  "resetOnLaunch": {
+                    "type": "boolean",
+                    "description": "Resets the device after starting the debugger before starting the program to debug. Defaults to true."
+                  },
+                  "socketTimeout": {
+                    "type": "number",
+                    "description": "In secs. If no response is received within this time the connection is disconnected. Usually you don't need to change this value. Defaults to 5 seconds."
+                  }
+                }
+              },
+              "zsim": {
+                "description": "'The configuration of the internal Z80 simulator.",
+                "type": "object",
+                "properties": {
+                  "zxDisplayKeyboard": {
+                    "type": "boolean",
+                    "description": "If enabled the simulator shows a display and a keyboard to simulate keypresses.",
+                    "default": true
+                  },
+                  "cpuLoadInterruptRange": {
+                    "type": "number",
+                    "description": "The number of interrupts to calculate the CPU-load average from. 0 to disable.",
+                    "default": 1
+                  },
+                  "vsyncInterrupt": {
+                    "type": "boolean",
+                    "description": "Default is true if some ZX81 feature is enabled otherwise false. If enabled an interrupt is generated after ca. 20ms (this assumes a CPU clock of 3.25MHz).",
+                    "default": false
+                  },
+                  "cpuFrequency": {
+                    "type": "number",
+                    "description": "The CPU frequency is only used for output. I.e. when the t-states are printed there is also a printout of the correspondent time. This is calculated via the CPU frequency here.",
+                    "default": 3250000
+                  },
+                  "limitSpeed": {
+                    "type": "number",
+                    "description": "If enabled the simulated CPU performance is throttled to fit the given PU frequency. Is enabled by default. If disabled the CPU will be simulated as fast as possible.",
+                    "default": false
+                  },
+                  "updateFrequency": {
+                    "type": "number",
+                    "description": "The update frequency of the simulator view in Hz. Defaults to 10 Hz. Possible range is 5 to 100 Hz.",
+                    "default": 10
+                  }
+                }
+              },
+              "rootFolder": {
+                "description": "The path of the root folder. All other paths are relative to this. Usually set to ${workspaceFolder}.",
+                "type": "string",
+                "default": "${workspaceFolder}"
+              },
+              "smallValuesMaximum": {
+                "type": "number",
+                "description": "Interprets labels as address if value is bigger. Typically this is e.g. 512. So all numbers below are not treated as addresses if shown. So most constant values are covered with this as they are usually smaller than 512. Influences the formatting.",
+                "default": 512
+              },
+              "disassemblerArgs": {
+                "description": "Arguments passed to the disassembler (in the VARIABLES pane).",
+                "properties": {
+                  "numberOfLines": {
+                    "type": "number",
+                    "description": "The number of lines displayed in the disassembly.",
+                    "default": 10
+                  }
+                }
+              },
+              "smartDisassemblerArgs": {
+                "description": "Arguments passed to the smart disassembler used in 'Analyze', i.e. call graph, flow chart and smart (text) disassembler.",
+                "properties": {
+                  "lowerCase": {
+                    "type": "boolean",
+                    "description": "true = use lower case for the instructions, false = use upper case.",
+                    "default": true
+                  }
+                }
+              },
+              "tmpDir": {
+                "type": "string",
+                "description": "A directory for temporary files created by this debug adapter. Used e.g. for disassemblies. E.g. '.tmp'"
+              },
+              "binary": {
+                "type": "string",
+                "description": "(Optional) Load a .P file compiled externaly into the emulator on startup of the debug session."
+              },
+              "startAutomatically": {
+                "type": "boolean",
+                "description": "Start automatically after launch. Default is false."
+              },
+              "commandsAfterLaunch": {
+                "description": "An array with commands that are executed after the program-to-debug is loaded. With '-e' or '-exec' you can pass commands to the debugger directly.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "history": {
+                "description": "Configures the 'reverse debugging' (time travel).",
+                "type": "object",
+                "properties": {
+                  "reverseDebugInstructionCount": {
+                    "type": "number",
+                    "description": "Sets the number of instructions for reverse debugging. If set to 0 then reverse debugging is turned off. Default is 10000."
+                  },
+                  "spotCount": {
+                    "type": "number",
+                    "description": "Sets the number of instructions to show in a spot. If you set this e.g. to 5 then the 5 previous and the 5 next instructions related to the current position are shown. Use 0 to disable. Default is 10."
+                  },
+                  "spotShowRegisters": {
+                    "type": "boolean",
+                    "description": "If true it shows the changed register values in the spot history. You can disable the feature here. Defaults to true."
+                  },
+                  "codeCoverageEnabled": {
+                    "type": "boolean",
+                    "description": "Enables/disables code coverage. Default is true."
+                  }
+                }
+              },
+              "formatting": {
+                "description": "Configures the display of values of ZX81 Debugger. e.g. it is possible to customize how the registers are displayed or what is displayed on hovering.",
+                "type": "object",
+                "properties": {
+                  "registerVar": {
+                    "description": "Defines the formatting of the registers when displayed in the VARIABLES area. E.g. as hex value or as integer. Also allows to display labels and various other formats. Use:\n${name} = the name of the register, e.g. HL\n${hex} = value as hex, e.g. A9F5\n${dhex} = value as hex with space between bytes, e.g. A9 F5\n${unsigned} = value as unsigned, e.g. 1234\n$(signed) = value as signed, e.g. -59\n$(bits) = value as bits , e.g. 10011011\n$(flags) = value interpreted as status flags (only useful for F and F'), e.g. ZNC\n${labels} = value as label (or several labels)\n{labelsplus} = value as label (or several labels) plus an index/offset\n${pre:labels:join} = value as label (or several labels). If no label is found nothing is printed. If at least 1 label is found the 'pre' string is printed followed by the label(s). If more than 1 label is found they are concatenated with the 'join' string.\nNote: The ${b@:...} prefix is not allowed in for the VARIABLES section.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "registerHover": {
+                    "description": "Format how the registers are displayed when hovering with the mouse. Is an array with 2 strings tuples. The first is an regex that checks the register. If fulfilled the 2nd is used to format the value.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "bigValues": {
+                    "type": "string",
+                    "description": "The general formatting for address labels bigger than 'smallValuesMaximum'."
+                  },
+                  "smallValues": {
+                    "type": "string",
+                    "description": "The general formatting for small values like constants smaller/equal than 'smallValuesMaximum'."
+                  },
+                  "watchByte": {
+                    "type": "string",
+                    "description": "The 'byte' formatting for labels in the WATCHes area."
+                  },
+                  "watchWord": {
+                    "type": "string",
+                    "description": "The 'word' formatting for labels in the WATCHes area."
+                  },
+                  "stackVar": {
+                    "type": "string",
+                    "description": "Format for the pushed values in the STACK area."
+                  }
+                }
+              },
+              "memoryViewer": {
+                "description": "The appearance of the memory viewer can be customized here. E.g. the colors or the hover display.",
+                "type": "object",
+                "properties": {
+                  "addressColor": {
+                    "type": "string",
+                    "description": "The text color of the address field."
+                  },
+                  "bytesColor": {
+                    "type": "string",
+                    "description": "The color of the bytes shown in hex."
+                  },
+                  "charColor": {
+                    "type": "string",
+                    "description": "The text color of the char field."
+                  },
+                  "addressHoverFormat": {
+                    "type": "string",
+                    "description": "see registerVarFormat. Format for the address when hovering."
+                  },
+                  "valueHoverFormat": {
+                    "type": "string",
+                    "description": "see registerVarFormat. Format for the value when hovering."
+                  },
+                  "registerPointerColors": {
+                    "type": "array",
+                    "description": "An array with register/color pairs. All selected register will appear with the correspondent color in the memory view. Registers not chosen will not appear.",
+                    "items": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "default": [
+                      "HL",
+                      "darkgreen",
+                      "DE",
+                      "darkcyan",
+                      "BC",
+                      "dimgray",
+                      "IX",
+                      "darkorange",
+                      "IY",
+                      "darkviolet"
+                    ]
+                  },
+                  "registersMemoryView": {
+                    "type": "array",
+                    "description": "An array of register to show in the register memory view. This view is automatically opened at startup and shows the memory the registers point to. E.g. [ 'HL', 'DE', 'IX' ].",
+                    "items": {
+                      "type": "string"
+                    },
+                    "default": [
+                      "HL",
+                      "DE",
+                      "BC",
+                      "IX",
+                      "IY"
+                    ]
+                  }
+                }
+              },
+              "displayViewer": {
+                "addressHoverFormat": {
+                  "type": "string",
+                  "description": "Format for the address when hovering over the display."
+                },
+                "valueHoverFormat": {
+                  "type": "string",
+                  "description": "Format for the value when hovering over the display."
+                }
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "ZX81 Debugger: Simulator",
+            "description": "Configuration to use the internal simulator for a ZX81.",
+            "body": {
+              "type": "zx81debugger",
+              "request": "launch",
+              "name": "ZX81 - Simulator",
+              "remoteType": "zsim",
+              "startAutomatically": false,
+              "rootFolder": "^\"\\${workspaceFolder\\}\""
+            }
+          }
+        ]
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "zx81debugger.welcome",
+        "title": "Get Started with ZX81 Debugger",
+        "description": "Your first steps to create a Z80 assembler file for the ZX81, compile and debug it without leaving Visual Studio Code.",
+        "when": "workspacePlatform != webworker",
+        "steps": [
+          {
+            "id": "zx81debugger.createFile",
+            "title": "Create a ZX81 assembler file",
+            "description": "Create a new, empty, ZX81 assembler file with the [New File...](command:welcome.showNewFileEntries) command in the **File** menu. Select **ZX81 Assembler File** in the list.\n[Create a ZX81 assembler file](command:welcome.showNewFileEntries)",
+            "media": {
+              "image": "assets/new-file.png",
+              "altText": "File / New File... command"
+            },
+            "completionEvents": ["onCommand:zx81debugger.createNewFile"]
+          },
+          {
+            "id": "zx81debugger.enterCode",
+            "title": "Enter some Z80 assembler code",
+            "description": "[Paste](command:zx81debugger.welcome.pasteExample) some example Z80 assembler code in the new file.\n[Paste Example Code](command:zx81debugger.welcome.pasteExample)",
+            "media": {
+              "image": "assets/example.png",
+              "altText": "Some Z80 code"
+            },
+            "completionEvents": ["onCommand:zx81debugger.welcome.pasteExample"]
+          },
+          {
+            "id": "zx81debugger.save",
+            "title": "Save the ZX81 assembler file",
+            "description": "[Save](command:zx81debugger.welcome.save) the ZX81 file. **Be sure to select ZX81 Assembler File** when saving the file to avoid confusion with any other installed extension.\n[Save the ZX81 file](command:zx81debugger.welcome.save)",
+            "media": {
+              "image": "assets/save.png",
+              "altText": "Save the file"
+            }
+          },
+          {
+            "id": "zx81debugger.debug",
+            "title": "Run and debug your ZX81 program",
+            "description": "Click on the [Run and Debug](command:workbench.view.debug) icon in the **Activity Bar** on the left.\n[Show Run and Debug](command:workbench.view.debug)\n\nClick on [Run and Debug](command:zx81debugger.welcome.debug) button or press [F5](command:zx81debugger.welcome.debug) when on the ZX81 file. This will compile the file, start the debugger and display the ZX81 simulator.\n[Start the debugger](command:zx81debugger.welcome.debug)",
+            "media": {
+              "image": "assets/debug.png",
+              "altText": "Run and Debug"
+            }
+          }
+        ]
+      }
+    ],
+    "snippets": [
+      {
+        "language": "asm-zx81",
+        "path": "./snippets/hello-world.json"
+      }
+    ]
+  }
+}
