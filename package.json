@@ -1,7 +1,7 @@
 {
   "name": "zx81-debugger",
   "displayName": "ZX81 Debugger",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "andrivet",
   "description": "Visual Studio Code Debugger for the ZX81.",
   "author": {
@@ -91,8 +91,14 @@
     "languages": [
       {
         "id": "asm-zx81",
-        "extensions": [".zx81", ".asm", ".z80"],
-        "aliases": ["ZX81 Assembler File"]
+        "extensions": [
+          ".zx81",
+          ".asm",
+          ".z80"
+        ],
+        "aliases": [
+          "ZX81 Assembler File"
+        ]
       }
     ],
     "grammars": [
@@ -269,13 +275,15 @@
         "runtime": "node",
         "languages": [
           "asm-zx81"
-          ],
+        ],
         "configurationAttributes": {
           "launch": {
             "required": [],
             "properties": {
               "remoteType": {
-                "enum": ["zsim"],
+                "enum": [
+                  "zsim"
+                ],
                 "description": "The kind of simulator to use: 'zsim' for the internal ZX81 simulator.",
                 "default": "zsim"
               },
@@ -565,7 +573,9 @@
               "image": "assets/new-file.png",
               "altText": "File / New File... command"
             },
-            "completionEvents": ["onCommand:zx81debugger.createNewFile"]
+            "completionEvents": [
+              "onCommand:zx81debugger.createNewFile"
+            ]
           },
           {
             "id": "zx81debugger.enterCode",
@@ -575,7 +585,9 @@
               "image": "assets/example.png",
               "altText": "Some Z80 code"
             },
-            "completionEvents": ["onCommand:zx81debugger.welcome.pasteExample"]
+            "completionEvents": [
+              "onCommand:zx81debugger.welcome.pasteExample"
+            ]
           },
           {
             "id": "zx81debugger.save",
