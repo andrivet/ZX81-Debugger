@@ -56,7 +56,7 @@ export class SimulatedMemory implements Serializable {
 	constructor() {
 		this.memory = new Uint8Array(64 * 1024);
 		const romData = this.readRomFile(Utility.getExtensionPath() + '/data/zx81.rom');
-		this.memory.set(romData);
+		if(romData) this.memory.set(romData);
 
 		// Breakpoints
 		this.clearHit();
@@ -273,7 +273,8 @@ export class SimulatedMemory implements Serializable {
 	 * @param filePath Absolute path to raw data file.
 	 * @returns An Uint8Array with the data.
 	 */
-	protected readRomFile(filePath: string): Uint8Array {
+	protected readRomFile(filePath: string): Uint8Array | null {
+		if(!fs.statSync(filePath, {throwIfNoEntry: false})) return null;
 		const romBuffer = fs.readFileSync(filePath);
 		return new Uint8Array(romBuffer.buffer);
 	}
