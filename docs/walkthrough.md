@@ -4,7 +4,7 @@
 
 This walkthrough will show you how to create, edit, compile and debug assembly programs for the ZX81.
 
-If it is not yet the case, install the ZX81-Debugger extension in Visual Studio Code. In Visual Studio Code, click on [the Extensions icons on the Activity Bar on the side](https://code.visualstudio.com/docs/editor/extension-marketplace) and search for "ZX81-Debugger" (andrivet.zx81-debugger). Click on **Install**.
+If it is not yet the case, install the ZX81-Debugger extension in Visual Studio Code. In Visual Studio Code, click on [the Extensions icons on the Activity Bar on the side](https://code.visualstudio.com/docs/editor/extension-marketplace) and search for "ZX81-Debugger" (`andrivet.zx81-debugger`). Click on **Install**.
 
 ![ZX81](./images/install.png)
 
@@ -48,7 +48,7 @@ Click on the next step. We are now ready to debug. Click on the **Show Run and D
 
 ![ZX81](./images/welcome09.png)
 
-This opens the Run and Debug panel on the left. Then click on the **Run and Debug** buton.
+This opens the Run and Debug panel on the left. Then click on the **Run and Debug** button.
 
 ![ZX81](./images/welcome10.png)
 
@@ -64,4 +64,4 @@ To have more space, you can close the Welcome panel.
 
 ![ZX81](./images/welcome12.png)
 
-To learn how to debug this example program, look at [Debug Hello-World Program - A Step by Step Guide](./debug.md).
+To learn how to debug this example program, look at [Debug Hello-World Program - A Step-by-Step Guide](./debug.md).
