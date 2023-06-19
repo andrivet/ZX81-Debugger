@@ -91,22 +91,4 @@ export class Comments {
 	public addBranchToUnassignedMemory(originAddress: number, targetAddress: number) {
 		this.addCommentForAddress(originAddress, 'The disassembly branches into unassigned memory at ' + Format.getHexFormattedString(targetAddress, 4) + '.');
 	}
-
-
-	/** Adds comment that disassembly did a branch to unassigned memory.
-	 * @param addr64k The address to add the comment to.
-	 */
-	public addOpcodeSpreadsOverBanks(addr64k: number) {
-		this.addCommentForAddress(addr64k, 'The opcode at ' + Format.getHexFormattedString(addr64k, 4) + ' spreads over 2 different banks. This could be wrong. The disassembly stops here.');
-	}
-
-
-	/** Adds comment that disassembly would continue in another bank and
-	 * therefore is stopped.
-	 * @param addr64k The address to add the comment to. This is the
-	 * address of the previous opcode.
-	 */
-	public addONextOpcodeInOtherBank(addr64k: number) {
-		this.addCommentForAddress(addr64k, 'The opcode that would follow the opcode at ' + Format.getHexFormattedString(addr64k, 4) + ' would start in a different bank. This could be wrong. The disassembly stops here.');
-	}
 }

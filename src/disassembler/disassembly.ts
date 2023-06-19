@@ -274,15 +274,14 @@ export class DisassemblyClass extends SmartDisassembler {
 				...this.callStackAddresses,
 				...codeAddresses, // Also add any CODE addresses, given by the user from the rev-eng.list file
 			];
-			// Convert to 64k addresses
 			const addrs64k = allAddrs;
 
-			// Get all skip addresses and convert to 64k
+			// Get all skip addresses
 			const skipAddresses = Labels.getSkipAddresses();
 			this.skipAddrs64k = skipAddresses;
 
-			// Collect all address labels and convert to 64k
-			const labels = this.get64kLabels();
+			// Collect all address labels
+			const labels = this.getLabels();
 			// Disassemble
 			this.getFlowGraph(addrs64k, labels);
 			this.disassembleNodes();

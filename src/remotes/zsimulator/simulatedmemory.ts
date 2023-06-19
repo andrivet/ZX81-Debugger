@@ -66,7 +66,7 @@ export class SimulatedMemory implements Serializable {
 
 
 	/**
-	 * Clears the whole memory (all banks) with 0s.
+	 * Clears the whole memorywith 0s.
 	 * So far only used by unit tests.
 	 */
 	public clear() {

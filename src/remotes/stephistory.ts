@@ -490,12 +490,7 @@ export class StepHistoryClass extends EventEmitter {
 		if (condition != undefined) {
 			const breakAddress = pc;
 			const addrString = Utility.getHexString(breakAddress & 0xFFFF, 4);
-			let bankString = "";
-			const bank = breakAddress >>> 16;
-			if (bank != 0)
-				bankString = " (bank=" + (bank - 1).toString() + ")";
-			reason = "Breakpoint hit @" + addrString + "h" + bankString;
-			//reason='Breakpoint hit at PC='+Utility.getHexString(pc&0xFFFF, 4)+'h';
+			reason = "Breakpoint hit @" + addrString + "h";
 			if (condition != "")
 				reason += ', ' + condition;
 		}

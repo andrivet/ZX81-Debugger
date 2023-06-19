@@ -101,51 +101,6 @@ suite('SimulatedMemory', () => {
 		assert.equal(result[3], 0xF4);
 	});
 
-
-	test('getMemory', () => {
-		const mem = new SimulatedMemory() as any;
-
-		mem.memoryBanks[0][0] = 0x34;
-		mem.memoryBanks[0][1] = 0x12;
-		let result = mem.getMemory16(0x0000);
-		assert.equal(result, 0x1234);
-
-		mem.memoryBanks[0][0] = 0x34;
-		mem.memoryBanks[0][1] = 0x12;
-		mem.memoryBanks[0][2] = 0x78;
-		mem.memoryBanks[0][3] = 0x56;
-		result = mem.getMemory32(0x0000);
-		assert.equal(result, 0x56781234);
-
-		mem.memoryBanks[7*32][0x1FFF] = 0x9A;	// 0xFFFF
-		mem.memoryBanks[7*32][0x1FFE] = 0xBC;	// 0xFFFE
-		mem.memoryBanks[7*32][0x1FFD] = 0xDE;	// 0xFFFD
-
-		result = mem.getMemory16(0xFFFF);
-		assert.equal(result, 0x349A);
-
-		result = mem.getMemory32(0xFFFF);
-		assert.equal(result, 0x7812349A);
-
-		result = mem.getMemory32(0xFFFE);
-		assert.equal(result, 0x12349ABC);
-
-		result = mem.getMemory32(0xFFFD);
-		assert.equal(result, 0x349ABCDE);
-
-		const offs = 0x2000;
-		mem.memoryBanks[0][offs - 1] = 0xC1;
-		mem.memoryBanks[1*32][0] = 0xD2;
-		result = mem.getMemory16(offs - 1);
-		assert.equal(result, 0xD2C1);
-
-		mem.memoryBanks[0][offs - 2] = 0xB0;
-		mem.memoryBanks[1*32][1] = 0xE3;
-		result = mem.getMemory32(offs - 2);
-		assert.equal(result, 0xE3D2C1B0);
-	});
-
-
 	suite('rom file', () => {
 		test('read raw ROM file', () => {
 			const mem = new SimulatedMemory() as any;
@@ -164,21 +119,6 @@ suite('SimulatedMemory', () => {
 			assert.equal(data[31100], 205);
 		});
 
-
-		test('read bank from ROM file', () => {
-			const mem = new SimulatedMemory() as any;
-			const data = mem.memoryBanks[0];
-			assert.equal(data[0], 243);
-			assert.equal(data[0x0FFF], 24);
-		});
-
-
-		test('read bank from ROM file with offset', () => {
-			const mem = new SimulatedMemory() as any;
-			const data = mem.memoryBanks[1];
-			assert.equal(data[0], 109);
-			assert.equal(data[0x0FFF], 32);
-		});
 	});
 });
 

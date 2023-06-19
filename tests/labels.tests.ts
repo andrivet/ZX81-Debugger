@@ -335,44 +335,6 @@ suite('Labels', () => {
 				assert.equal(labels.distanceForLabelAddress.get(0x7000).distance, 0x1004);
 			});
 
-			test('long addresses', () => {
-				// Test one label
-				initNumberforLabels([0x018000]);
-				assert.equal(labels.distanceForLabelAddress.size, 0);
-
-				// Test two label
-				initNumberforLabels([0x018000, 0x018001]);
-				assert.equal(labels.distanceForLabelAddress.size, 1);
-				assert.equal(labels.distanceForLabelAddress.get(0x018000).distance, 1);
-
-				// Test several labels
-				initNumberforLabels([0x028000, 0x028001, 0x028003, 0x028006, 0x028106]);
-				assert.equal(labels.distanceForLabelAddress.size, 4);
-				assert.equal(labels.distanceForLabelAddress.get(0x028000).distance, 1);
-				assert.equal(labels.distanceForLabelAddress.get(0x028001).distance, 2);
-				assert.equal(labels.distanceForLabelAddress.get(0x028003).distance, 3);
-				assert.equal(labels.distanceForLabelAddress.get(0x028006).distance, 0x100);
-				assert.equal(labels.distanceForLabelAddress.get(0x028106), undefined);
-
-				// Different banks (consecutive)
-				initNumberforLabels([0x018000, 0x028001, 0x038003, 0x048006, 0x058106]);
-				assert.equal(labels.distanceForLabelAddress.size, 4);
-				assert.equal(labels.distanceForLabelAddress.get(0x018000).distance, 1);
-				assert.equal(labels.distanceForLabelAddress.get(0x028001).distance, 2);
-				assert.equal(labels.distanceForLabelAddress.get(0x038003).distance, 3);
-				assert.equal(labels.distanceForLabelAddress.get(0x048006).distance, 0x100);
-				assert.equal(labels.distanceForLabelAddress.get(0x058106), undefined);
-
-				// Different banks (lower). Note: this results in incorrect sizes. E.g.
-				// If an equ was defined between the labels.
-				initNumberforLabels([0x018000, 0x028001, 0x037000, 0x028004]);
-				assert.equal(labels.distanceForLabelAddress.size, 2);
-				assert.equal(labels.distanceForLabelAddress.get(0x018000).distance, 1);
-				assert.equal(labels.distanceForLabelAddress.get(0x028001), undefined);
-				assert.equal(labels.distanceForLabelAddress.get(0x037000).distance, 0x1004);
-				assert.equal(labels.distanceForLabelAddress.get(0x028004), undefined);
-			});
-
 		});
 
 	});

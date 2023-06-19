@@ -85,10 +85,10 @@ export class SmartDisassembler {
 	}
 
 
-	/** Get all Labels for the currently mapped in banks.
-	 * @returns an array of 64k addresses with associated label string.
+	/** Get all Labels.
+	 * @returns an array of addresses with associated label string.
 	 */
-	public get64kLabels(): AddressLabel[] {
+	public getLabels(): AddressLabel[] {
 		// Get address and one label
 		const addressLabels = Labels.getLabelsMap();
 		// Filter map by existing address

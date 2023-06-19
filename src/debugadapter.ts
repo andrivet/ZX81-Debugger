@@ -1862,7 +1862,7 @@ export class DebugSessionClass extends DebugSession {
 		else if (cmd === '-mvc') {
 			output = await MemoryCommands.evalMemViewColumns(tokens);
 		}
-		else if (cmd === '-dfile') {
+		else if (cmd === '-zx81') {
 			output = await MemoryCommands.evalDisplayView();
 		}
 		else if (cmd === '-mvd') {
@@ -2144,10 +2144,10 @@ export class DebugSessionClass extends DebugSession {
 		else {
 			// If no count is given try to estimate it by calculating the distance to
 			// the next label.
-			// Note: labelValue is 64k only. So first check if the label name is simply a name without calculation.
+			// Note: First check if the label name is simply a name without calculation.
 			// If yes, use it. If no use labelValue.
 			let distAddr = Labels.getNumberForLabel(labelString);
-			// If not an address then use the 64k value
+			// If not an address then use the label value
 			if (distAddr === undefined)
 				distAddr = labelValue;
 			// Try to get the distance to the next label:
@@ -2242,16 +2242,16 @@ export class DebugSessionClass extends DebugSession {
 	protected async evalHelp(_tokens: Array<string>): Promise<string> {
 		const output =
 			`Allowed commands are:
-"-address address": Prints out internal information of the debugger for a 64k address. Can be helpful if you encounter e.g. 'Unverified breakpoints' problems.
+"-address address": Prints out internal information of the debugger for an address. Can be helpful if you encounter e.g. 'Unverified breakpoints' problems.
 "-dasm address count": Disassembles a memory area. count=number of lines.
 "-eval expr": Evaluates an expression. The expression might contain mathematical expressions and also labels. It will also return the label if
 the value correspondents to a label.
-"-exec|e cmd args": cmd and args are directly passed to the remote (ZEsarUX, CSpect, ...). E.g. "-exec get-registers".
-"-help|h": This command. Do "-e help" to get all possible remote (ZEsarUX, CSpect, ...) commands.
+"-exec|-e cmd args": cmd and args are directly passed to the remote (ZEsarUX). E.g. "-exec get-registers". Do "-e help" to get all possible remote (ZEsarUX) commands.
+"-help|h": This command. 
 "-label|-l XXX": Returns the matching labels (XXX) with their values. Allows wildcard "*".
 "-md address size [dec|hex] [word] [little|big]": Memory dump at 'address' with 'size' bytes. Output is in 'hex' (default) or 'dec'imal. Per default data will be grouped in bytes.
   But if chosen, words are output. Last argument is the endianness which is little endian by default.
-"-dfile": Show the display (DFILE) with ZX81 characters and a ZX81 keyboard.
+"-zx81": Show the ZX81 simulator.
 "-msetb address value [repeat]":
 	- address: The address to fill. Can also be a label or expression.
 	- value: The byte value to set.
@@ -2277,17 +2277,15 @@ the value correspondents to a label.
 "-state save|restore|list|clear|clearall [statename]": Saves/restores the current state. I.e. the complete RAM + the registers.
 "-wpadd address [size] [type]": Adds a watchpoint. See below.
 "-wprm address [size] [type]": Removes a watchpoint.
-	- address: The 64k address to watch.
+	- address: The address to watch.
 	- size: The size of the area to watch. Can be omitted. Defaults to 1.
 	- type:
 	    - "r": Read watchpoint
 	    - "w": Write watchpoint
 	    - "rw": Read/write watchpoint. Default.
-	Note: This is a leightweight version of the WPMEM watchpoints you can add to your sources.
+	Note: This is a lightweight version of the WPMEM watchpoints you can add to your sources.
 	      Watchpoints added through "-wpadd" are independent. They are NOT controlled (enabled/disabled) through the
 		  vscode's BREAKPOINTS pane.
-		  Furthermore they work on 64k addresses (whereas WPMEM works on long addresses).
-		  I.e. a watchpoint added through "-wpadd" will break in any bank.
 
 Some examples:
 "-exec h 0 100": Does a hexdump of 100 bytes at address 0.
@@ -2894,7 +2892,7 @@ E.g. use "-help -view" to put the help text in an own view.
 	public async analyzeAtCursor(type: 'disassembly' | 'flowChart' | 'callGraph', arr: Array<{filename: string, fromLine: number, toLine: number}>): Promise<void> {
 		Log.log('analyzeAtCursor');
 		try {
-			// Get all start addresses and check banks
+			// Get all start addresses
 			const startAddrs: number[] = [];
 			for (const block of arr) {
 				const [fromAddr,] = this.checkFileLinesPagedIn(block.filename, block.fromLine, block.toLine);
@@ -2935,8 +2933,8 @@ E.g. use "-help -view" to put the help text in an own view.
 			const data = await Remote.readMemoryDump(0, 0x10000);
 			analyzer.setMemory(0, data);
 
-			// Collect all address labels and convert to 64k
-			const labels = analyzer.get64kLabels();
+			// Collect all address labels
+			const labels = analyzer.getLabels();
 			// Make sure that at least start labels from the disassembly are used if available
 			const startAddrs64k = startAddrs.map(addr => addr & 0xFFFF);
 			for (const addr64k of startAddrs64k) {

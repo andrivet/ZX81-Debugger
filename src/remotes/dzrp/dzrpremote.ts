@@ -596,11 +596,7 @@ export class DzrpRemote extends RemoteBase {
 				}
 				// Or breakpoint
 				const addrString = Utility.getHexString(breakAddress & 0xFFFF, 4);
-				let bankString = "";
-				const bank = breakAddress >>> 16;
-				if (bank != 0)
-					bankString = " (bank=" + (bank - 1).toString() + ")";
-				reasonString = "Breakpoint hit @" + addrString + "h" + bankString + ".";
+				reasonString = "Breakpoint hit @" + addrString + "h" + ".";
 				if (condition)
 					reasonString += " Condition: " + condition;
 				return reasonString;
