@@ -1,5 +1,7 @@
 # Debug Hello-World Program - A Step-by-Step Guide
 
+> [Une version française est disponible](./debug-FR.md).
+
 If you have not yet used the [Welcome Walkthrough](./walkthrough.md), please follow it in order to create a `hello-world.zx81` file and learn how to start the ZX81 Debugger.
 
 ![ZX81](./images/welcome13.png)
@@ -8,7 +10,7 @@ The debugger has several parts:
 
   * The **Code Editor** where you can see and edit your program. When debugging, the **Current Line** is indicated by a yellow mark in the margin.
   * The **ZX81 Simulated Screen**. It is blank when the simulator is started.
-  * The **ZX81 Simulated Keyboard**. To enter keys in the simulator, click on the keyboard (to give it the focus) and press one of the keys on your keyboard. For the moment, it is not possible to click on the keys of the simulated keyboard but this may change in the future.
+  * The **ZX81 Simulated Keyboard**. To enter keys in the simulator, click on the image of the ZX81 keyboard (to give it the focus) and press one of the keys on your keyboard. For the moment, it is not possible to click on the keys of the simulated keyboard but this may change in the future.
   * The **Debugger Commands** with buttons to **Run** or **Pause**, **Step**, **Step Back**, **Restart** and **Stop**.
   * The Variables (**Vars**) category displays the current values of the **Registers**, of the complementary registers (**Registers 2**), of the ZX81 **System Variables**.
   * The **Call Stack** displays the addresses pushed onto the stack.
@@ -166,7 +168,7 @@ A new view is open on the right side.
 
 ![Debug](./images/debug11.png)
 
-The space is a little cluttered but you can move this new view. Click on its title *Memory 4099h-40A4h` and drag and drop it on the other memory view, near the bottom.
+The space is a little cluttered but you can move this new view. Click on its title **Memory 4099h-40A4h** and drag and drop it on the other memory view, near the bottom.
 
 ![Debug](./images/debug12.png)
 

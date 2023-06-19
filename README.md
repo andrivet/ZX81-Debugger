@@ -2,7 +2,7 @@
 
 ![ZX81](assets/ZX81.png)
 
-This project provides a Visual Studio Extension in order to develop programs written in Z80 assembly language for the Sinclair ZX81. In particular:
+This project provides a Visual Studio Extension to develop programs written in Z80 assembly language for the Sinclair ZX81. In particular:
 
 * You can assemble Z80 programs without any other external software.
 * You can debug your programs within Visual Studio Code, stepping, putting breakpoints, etc.
@@ -37,4 +37,4 @@ The Extension is ready and you can start to write, compile and debug your progra
 * ZX81-Debugger is licensed under GPLv3.
 * Z80 Assembler in Typescript is licensed under GPLv3.
 * DeZog is licensed under the MIT license.
-* Z80.js simulator is licenses under the MIT license.
+* Z80.js simulator is licensed under the MIT license.
