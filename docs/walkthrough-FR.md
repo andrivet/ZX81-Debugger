@@ -4,7 +4,7 @@
 
 Ce guide vous montrera comment créer, éditer, compiler et déboguer des programmes en assembleur pour le ZX81.
 
-Si ce n'est pas encore le cas, installez l'extension **ZX81-Debugger** dans Visual Studio Code. Dans Visual Studio Code, cliquez sur [les icônes Extensions dans la barre d'activité sur le côté] (https://code.visualstudio.com/docs/editor/extension-marketplace) et recherchez "ZX81-Debugger" (`andrivet.zx81-debugger`). Cliquez sur **Installer**.
+Si ce n'est pas encore le cas, installez l'extension **ZX81-Debugger** dans Visual Studio Code. Dans Visual Studio Code, cliquez sur [les icônes Extensions dans la barre d'activité sur le côté](https://code.visualstudio.com/docs/editor/extension-marketplace) et recherchez "ZX81-Debugger" ([`andrivet.zx81-debugger`](https://marketplace.visualstudio.com/items?itemName=andrivet.zx81-debugger)). Cliquez sur **Installer**.
 
 ![ZX81](./images/install.png)
 
