@@ -109,7 +109,7 @@ export class Zx81View extends BaseView {
 			case 'keyChanged':
 				// A key was pressed.
 				// Une touche a été pressée.
-				this.keyChanged(message.key, message.value);
+				this.keyChanged(message.key, message.shift, message.value);
 				break;
 			
 				case 'valueChanged':
@@ -239,7 +239,7 @@ export class Zx81View extends BaseView {
 			// 24 lines of 33 bytes.
 			// 24 lignes de 33 octets.
 			const size = 33 * 24;
-			// Set the bew block to display.
+			// Set the new block to display.
 			// Indique le nouveau bloc à afficher.
 			this.setBlock(dfile, size, "Display");
 		}
@@ -454,12 +454,15 @@ export class Zx81View extends BaseView {
 
 		window.addEventListener("keydown", onKeyDown);
 		window.addEventListener("keyup", onKeyUp);
+		window.addEventListener("focus", onFocus);
+		window.addEventListener("blur", onBlur);
 
 		function onKeyDown(e) {
 			vscode.postMessage({
 				command: 'keyChanged',
 				value: true,
-				key: e.code
+				key: e.code,
+				shift: e.shiftKey
 			});
 		}
 
@@ -467,8 +470,19 @@ export class Zx81View extends BaseView {
 			vscode.postMessage({
 				command: 'keyChanged',
 				value: false,
-				key: e.code
+				key: e.code,
+				shift: e.shiftKey
 			});
+		}
+
+		function onFocus() {
+			const keyboard = document.querySelector(".keyboard");
+			if(keyboard) keyboard.classList.add("focus");
+		}
+
+		function onBlur() {
+			const keyboard = document.querySelector(".keyboard");
+			if(keyboard) keyboard.classList.remove("focus");
 		}
 
 		//# sourceURL=displayview-htmlscript.js
@@ -567,8 +581,15 @@ export class Zx81View extends BaseView {
 		}
 
 		.keyboard {
-			width: 512px;
+			width: 508px;
 			margin-top: 20px;
+			border-style: solid;
+			border-width: 2px;
+			border-color: black;
+		}
+
+		.focus {
+			border-color: greenyellow;
 		}
 		</style>
 
@@ -602,10 +623,11 @@ export class Zx81View extends BaseView {
 	 * Appelé lors de la pression ou le relachement d'une touche.
 	 * Met à jour les bits de ports correspondant
 	 * @param key E.g. "Digit2", "KeyQ", "Enter", "Space", "ShiftLeft" or "ShiftRight"
+	 * @param shift true: pressed, false: released.
 	 * @param on true: pressed, false: released.
 	 *           true: pressée, false: relachée.
 	 */
-	protected keyChanged(key: string, on: boolean) {
+	protected async keyChanged(key: string, shift: boolean, on: boolean) {
 		// Determine port.
 		// Détermine le numéro de port.
 		let port = 0;
@@ -615,66 +637,64 @@ export class Zx81View extends BaseView {
 			case 'Digit3':
 			case 'Digit4':
 			case 'Digit5':
-				port = 0xF7FE;
+				port = 0xF7;
 				break;
 			case 'Digit6':
 			case 'Digit7':
 			case 'Digit8':
 			case 'Digit9':
 			case 'Digit0':
-				port = 0xEFFE;
+				port = 0xEF;
 				break;
 			case 'KeyQ':
 			case 'KeyW':
 			case 'KeyE':
 			case 'KeyR':
 			case 'KeyT':
-				port = 0xFBFE;
+				port = 0xFB;
 				break;
 			case 'KeyY':
 			case 'KeyU':
 			case 'KeyI':
 			case 'KeyO':
 			case 'KeyP':
-				port = 0xDFFE;
+				port = 0xDF;
 				break;
 			case 'KeyA':
 			case 'KeyS':
 			case 'KeyD':
 			case 'KeyF':
 			case 'KeyG':
-				port = 0xFDFE;
+				port = 0xFD;
 				break;
 			case 'KeyH':
 			case 'KeyJ':
 			case 'KeyK':
 			case 'KeyL':
 			case 'Enter':
-				port = 0xBFFE;
+				port = 0xBF;
 				break;
-			case 'ShiftLeft':
 			case 'KeyZ':
 			case 'KeyX':
 			case 'KeyC':
 			case 'KeyV':
-				port = 0xFEFE;
+				port = 0xFE;
 				break;
 			case 'KeyB':
 			case 'KeyN':
 			case 'KeyM':
-			case 'ShiftRight':
+			case 'Period':
 			case 'Space':
-				port = 0x7FFE;
+				port = 0x7F;
 				break;
 			default:
 				break;
 		}
 
 		// Determine bit.
-		// Déztermine le numéro de bit.
-		let bit = 0;
+		// Détermine le numéro de bit.
+		let n_bit = -1;
 		switch (key) {
-			case 'ShiftLeft':
 			case 'KeyA':
 			case 'KeyQ':
 			case 'Digit1':
@@ -682,7 +702,7 @@ export class Zx81View extends BaseView {
 			case 'KeyP':
 			case 'Enter':
 			case 'Space':
-				bit = 0b00001;
+				n_bit = 0;
 				break;
 			case 'KeyZ':
 			case 'KeyS':
@@ -691,8 +711,8 @@ export class Zx81View extends BaseView {
 			case 'Digit9':
 			case 'KeyO':
 			case 'KeyL':
-			case 'ShiftRight':
-				bit = 0b00010;
+			case 'Period':
+				n_bit = 1;
 				break;
 			case 'KeyX':
 			case 'KeyD':
@@ -702,7 +722,7 @@ export class Zx81View extends BaseView {
 			case 'KeyI':
 			case 'KeyK':
 			case 'KeyM':
-				bit = 0b00100;
+				n_bit = 2;
 				break;
 			case 'KeyC':
 			case 'KeyF':
@@ -712,7 +732,7 @@ export class Zx81View extends BaseView {
 			case 'KeyU':
 			case 'KeyJ':
 			case 'KeyN':
-				bit = 0b01000;
+				n_bit = 3;
 				break;
 			case 'KeyV':
 			case 'KeyG':
@@ -722,7 +742,7 @@ export class Zx81View extends BaseView {
 			case 'KeyY':
 			case 'KeyH':
 			case 'KeyB':
-				bit = 0b10000;
+				n_bit = 4;
 				break;
 			default:
 				break;
@@ -730,22 +750,56 @@ export class Zx81View extends BaseView {
 
 		// Unknown key so return.
 		// Touche inconnue donc sort.
-		if(port === 0 || bit === 0) return;
+		if(port === 0 || n_bit === -1) return;
 
+		let bit = 1 << n_bit;
+		// Special case for the Shift key. If on same port, add the bit.
+		if(shift && port === 0xFE) bit |= 0b00001;
+
+		const actualPort = (port << 8) | 0x00FE;
 		// Get port value.
 		// Obtient la valeur du port.
 		Utility.assert(this.simulatedPorts);
-		let value = this.simulatedPorts.get(port)!;
+		let value = this.simulatedPorts.get(actualPort)!;
 		Utility.assert(value != undefined);
 		// Set or reset the bit.
 		// Met à jour le bit.
-		if (on)
-			value &= ~bit;
-		else
-			value |= bit;
+		if (on) value &= ~bit; else	value |= bit;
 		// Update the value of the port.
 		// Met à jour la valeur du port
-		this.simulatedPorts.set(port, value);
+		this.simulatedPorts.set(actualPort, value);
+
+		// Special case for the Shift key. If not on same port, update the shift port
+		if(shift && port !== 0xFE) {
+			value = this.simulatedPorts.get(0xFEFE)!;
+			this.simulatedPorts.set(0xFEFE, on ? value & 0b11110 : value | 0b00001);		
+		}
+	
+		await this.updateLastK(on, port, n_bit, shift);
+	}
+
+	private async updateLastK(on: boolean, port: number, n_bit: number, shift: boolean) {
+		// LAST_K+1     FD  FB  F7  EF  DF | DF  EF  F7  FB  FD
+		//                                 |
+		// LAST_K                          |
+		//        F7    1   2   3   4   5  | 6   7   8   9   0    EF
+		//                                 |
+		//        FB    Q   W   E   R   T  | Y   U   I   O   P    DF
+		//                                 
+		//        FD    A   S   D   F   G  | H   J   K   L  ret   BF
+		//                                 |
+        //        FE        Z   X   C   V  | B   N   M   .  spc   7F
+		//
+		// Shift is bit 0 on LAST_K+1.
+
+		if(on) {
+			await Remote.writeMemory(0x4025, port);
+			await Remote.writeMemory(0x4026, ~(1 << (n_bit + 1)) & (shift ? 0xFE : 0xFF));
+		}
+		else {
+			await Remote.writeMemory(0x4025, 0xFF);
+			await Remote.writeMemory(0x4026, 0xFF);
+		}
 	}
 
 }
