@@ -17,12 +17,11 @@ This Extension is only for the ZX81 computer. If you are looking for an Extensio
 
 Apart from [Visual Studio Code](https://code.visualstudio.com/download), there is no prerequisite. In Visual Studio Code, click on [the Extensions icons on the Activity Bar on the side](https://code.visualstudio.com/docs/editor/extension-marketplace) and search for "ZX81-Debugger" (andrivet.zx81-debugger). Click on **Install**.
 
-The Extension is ready and you can start to write, compile and debug your programs. Look at the [Walkthrough](./docs/walkthrough.md) to see how to use ZX81-Debugger.
+The Extension is ready, and you can start to write, compile and debug your programs. Look at the [Walkthrough](./docs/walkthrough.md) to see how to use ZX81-Debugger.
 
 # Limitations
 
 * It supports only programs written in Z80 assembly language. There is no support for BASIC programs.
-* For the moment, the ZX81 ROM is not integrated into the simulator. This may change in the future.
 * For the moment, only the internal simulator is supported. In the future, it will also support the [ZEsarUX emulator](https://github.com/chernandezba/zesarux).
 
 # Copyrights
@@ -31,6 +30,7 @@ The Extension is ready and you can start to write, compile and debug your progra
 * [Z80 Assembler in Typescript](https://github.com/andrivet/z80-assembler), Copyright &copy; 2023 Sebastien Andrivet.
 * [DeZog](https://github.com/maziac/DeZog), Copyright &copy; Thomas Busse.
 * [Z80.js simulator](https://github.com/DrGoldfire/Z80.js) Copyright &copy; Molly Howell
+* ZX81 ROM Copyright &copy; 1981 Nine Tiles - Included with the permission of Nine Tiles.
 
 # License
 

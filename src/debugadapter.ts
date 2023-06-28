@@ -617,11 +617,11 @@ export class DebugSessionClass extends DebugSession {
 					errors.forEach(err => DiagnosticsHandler.add(
 						err.message, 
 						'error', 
-						Utility.getAbsFilePath(err.filename), 
-						err.pos.line - 1, err.pos.offset
+						Utility.getAbsFilePath(err.position.filename), 
+						err.position.pos.line - 1, err.position.pos.offset
 					));
 					this.debugConsoleAppendLine("Error compiling, the debugger can't be started");
-					const doc = await vscode.workspace.openTextDocument(Utility.getAbsFilePath(errors[0].filename));
+					const doc = await vscode.workspace.openTextDocument(Utility.getAbsFilePath(errors[0].position.filename));
 					vscode.window.showTextDocument(doc, vscode.ViewColumn.Active, false);
 					Remote.terminate("Error compiling file");
 					resolve(undefined);

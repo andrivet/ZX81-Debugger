@@ -44,7 +44,7 @@
     "test": "mocha -u tdd ./out/tests/ --exit"
   },
   "dependencies": {
-    "@andrivet/z80-assembler": "^1.2.0",
+    "@andrivet/z80-assembler": "^1.3.0",
     "@bartificer/human-join": "^1.1.3",
     "@vscode/debugadapter": "^1.57.0",
     "@vscode/debugprotocol": "^1.57.0",
