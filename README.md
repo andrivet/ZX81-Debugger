@@ -6,7 +6,7 @@ This project provides a Visual Studio Extension to develop programs written in Z
 
 * You can assemble Z80 programs without any other external software.
 * You can debug your programs within Visual Studio Code, stepping, putting breakpoints, etc.
-* Your program runs in an internal simulator and the debugger displays a simulated display and accepts inputs from the keyboard.
+* Your program runs in an internal simulator, and the debugger displays a simulated display and accepts inputs from the keyboard.
 * If you prefer, you can use an external (and more accurate) simulator such as Zesarux.
 
 This Extension is only for the ZX81 computer. If you are looking for an Extension for the ZX-Spectrum, [look at DeZog](https://marketplace.visualstudio.com/items?itemName=maziac.dezog). The ZX81 Debugger is based [on this Extension](https://github.com/maziac/DeZog).
@@ -19,6 +19,10 @@ Apart from [Visual Studio Code](https://code.visualstudio.com/download), there i
 
 The Extension is ready, and you can start to write, compile and debug your programs. Look at the [Walkthrough](./docs/walkthrough.md) to see how to use ZX81-Debugger.
 
+# Assembler
+
+The ZX81 Debugger uses the [Z80 Assembler in Typescript Library](https://github.com/andrivet/z80-assembler). For more information about the assembly language supported, [see its documentation](https://github.com/andrivet/z80-assembler/docs/assembly.md).
+
 # Limitations
 
 * It supports only programs written in Z80 assembly language. There is no support for BASIC programs.
@@ -27,7 +31,7 @@ The Extension is ready, and you can start to write, compile and debug your progr
 # Copyrights
 
 * ZX81-Debugger, Copyright &copy; 2023 Sebastien Andrivet.
-* [Z80 Assembler in Typescript](https://github.com/andrivet/z80-assembler), Copyright &copy; 2023 Sebastien Andrivet.
+* [Z80 Assembler in Typescript Library](https://github.com/andrivet/z80-assembler), Copyright &copy; 2023 Sebastien Andrivet.
 * [DeZog](https://github.com/maziac/DeZog), Copyright &copy; Thomas Busse.
 * [Z80.js simulator](https://github.com/DrGoldfire/Z80.js) Copyright &copy; Molly Howell
 * ZX81 ROM Copyright &copy; 1981 Nine Tiles - Included with the permission of Nine Tiles.
@@ -35,6 +39,6 @@ The Extension is ready, and you can start to write, compile and debug your progr
 # License
 
 * ZX81-Debugger is licensed under GPLv3.
-* Z80 Assembler in Typescript is licensed under GPLv3.
+* Z80 Assembler in Typescript Library is licensed under GPLv3.
 * DeZog is licensed under the MIT license.
 * Z80.js simulator is licensed under the MIT license.
