@@ -92,7 +92,7 @@ export class DebugSessionClass extends DebugSession {
 
 	/// This array contains functions which are pushed on an emit (e.g. 'historySpot', not 'coverage')
 	/// and which are executed after a stackTrace.
-	/// The reason is that the disasm.list file will not exist before and emits
+	/// The reason is that the disasm file will not exist before and emits
 	/// regarding this file would be lost.
 	protected delayedDecorations = new Array<() => void>();
 
@@ -878,7 +878,7 @@ export class DebugSessionClass extends DebugSession {
 			// Disassembly content
 			const newText = Disassembly.getDisassemblyText();
 
-			// Update disasm.list if there is something to put into it
+			// Update disasm file if there is something to put into it
 			if (disasmUpdated && newText.length > 0)
 			{
 				// Remove all breakpoints temporarily
@@ -886,7 +886,7 @@ export class DebugSessionClass extends DebugSession {
 				// Note: at this point the new disassembly has already taken place. I.e. the line/addr associations are potentially wrong. However, because we remove all breakpoints, the following setBreakpointsRequest anyway does not contain any bp with line number for the disassembly file and will remove all breakpoints for the file.
 				vscode.debug.removeBreakpoints(removeBps);
 
-				// Update the disasm.list editor
+				// Update the disasm file editor
 				const disasmTextDoc = await this.getOrCreateDisasmTextDoc();
 				const prevLineCount = disasmTextDoc.lineCount;
 
@@ -931,7 +931,7 @@ export class DebugSessionClass extends DebugSession {
 		}
 
 		// At the end of the stack trace request the collected decoration events
-		// are executed. This is because the disasm.list did not exist before und thus
+		// are executed. This is because the disasm file did not exist before und thus
 		// events like 'historySpot' would be lost.
 		// Note: codeCoverage is handled differently because it is not sent during
 		// step-back.
@@ -979,7 +979,7 @@ export class DebugSessionClass extends DebugSession {
 	 * I.e. converts into files/lines for vscode.
 	 * Called at the end of the stackTraceRequest to fill the missing
 	 * source files.
-	 * @param sfrs Some of the sfrs[n].src is undefined. These will be filled with the info from the disasm.list.
+	 * @param sfrs Some of the sfrs[n].src is undefined. These will be filled with the info from the disasm file.
 	 * @returns [sfrs, addresses] The StackFrames (StackFrameAddrs) for vscode and a list of
 	 * addresses without reference to a file. (For the disassembly)
 	 */
@@ -1000,9 +1000,9 @@ export class DebugSessionClass extends DebugSession {
 
 
 	/**
-	 * Opens the text document for disasm.list.
+	 * Opens the text document for disasm file.
 	 * If it does not exist, it is created.
-	 * @return The text document associated with disasm.list.
+	 * @return The text document associated with disasm file.
 	 */
 	protected async getOrCreateDisasmTextDoc(): Promise<vscode.TextDocument> {
 		const absFilePath = DisassemblyClass.getAbsFilePath();
@@ -1060,7 +1060,7 @@ export class DebugSessionClass extends DebugSession {
 
 	/**
 	 * Searches for filename and line number first in Labels.
-	 * If not found it checks the disasm.list
+	 * If not found it checks the disasm file
 	 * @param addr The address
 	 * @returns uri and line number. If not found uri is undefined.
 	 */

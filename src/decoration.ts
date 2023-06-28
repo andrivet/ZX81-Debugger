@@ -44,10 +44,10 @@ class DecorationFileMap {
  * - and to store the decorations for each document/editor
  * This means: decoration are added to the editor as soon as they occur and also
  * whenever the active editor changes.
- * What makes it even more complicated is the fact that the disasm.list file may not even exist
+ * What makes it even more complicated is the fact that the disasm file file may not even exist
  * when a decoration comes in. And, furthermore, the file may exist already but change
  * its contents.
- * The disasm.list is created during the stackTraceRequest.
+ * The disasm file is created during the stackTraceRequest.
  * It requires decoration (like the other files) of
  * - coverage (green background)
  * - historySpot (the index numbers)
@@ -58,10 +58,10 @@ class DecorationFileMap {
  * (ordinary) file (in unassignedCodeCoverageAddresses).
  * Also 'coverage' is not emitted in case of reverse debugging.
  * 'historySpot', 'revDbg' and 'break' always contain the complete decoration information.
- * All those calls are delayed in the debugAdapter until the disasm.list file is created in the
+ * All those calls are delayed in the debugAdapter until the disasm file file is created in the
  * stackTraceRequest. This is already done in the debugAdapter.
  *
- * The disasm.list file got one more decoration: an italic style for the whole doc
+ * The disasm file file got one more decoration: an italic style for the whole doc
  * to indicate that the file is ot up-to-date.
  * This is handled simpler as only one file is affected.
  */
@@ -602,7 +602,7 @@ export class DecorationClass {
 	 * If not successful it reports the original location.
 	 * This is to handle a special case for reverse-engineering when you set a breakpoint at a list file but
 	 * it does not occupy any bytes.
-	 * (Those bytes would be visible in the disasm.list file).
+	 * (Those bytes would be visible in the disasm file file).
 	 * E.g. the breakpoint reason string should appear in that case in the disasm-list file.
 	 * @param addr The long address to convert.
 	 */

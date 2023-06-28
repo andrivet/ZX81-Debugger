@@ -19,8 +19,8 @@ import {MemAttribute} from './core/memory';
 import {Remote} from '../remotes/remotebase';
 
 
-/// The filename used for the temporary disassembly. ('./.tmp/disasm.list')
-const TmpDasmFileName = 'disasm.list';
+/// The filename used for the temporary disassembly.
+const TmpDasmFileName = 'disasm.zx81';
 
 
 /**
@@ -66,7 +66,7 @@ export class DisassemblyClass extends SmartDisassembler {
 
 	/**
 	 * Returns the file path of the temporary disassembly file.
-	 * @returns The relative file path, e.g. ".tmp/disasm.list".
+	 * @returns The relative file path, e.g. ".tmp/disasm.zx81".
 	 * Or undefined if Settings.launch not yet created.
 	 */
 	public static getAbsFilePath(): string {

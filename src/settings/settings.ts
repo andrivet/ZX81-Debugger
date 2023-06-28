@@ -96,7 +96,7 @@ export interface DisassemblerArgs {
 
 
 /**
- * The settings for the smart disassembler (disasm.list).
+ * The settings for the smart disassembler (disasm.zx81).
  */
 export interface SmartDisassemblerArgs {
 	lowerCase: boolean;
@@ -126,7 +126,7 @@ export interface SettingsParameters extends DebugProtocol.LaunchRequestArguments
 	/// These arguments are passed to the disassembler in the VARIABLEs pane.
 	disassemblerArgs: DisassemblerArgs;
 
-	/// These arguments are passed to the smart disassembler (disasm.list).
+	/// These arguments are passed to the smart disassembler (disasm.zx81).
 	smartDisassemblerArgs: SmartDisassemblerArgs;
 
 	/// A directory for temporary files created by this debug adapter. E.g. ".tmp"
