@@ -11,7 +11,7 @@
 
 ### Assembler
 
-* Allow (IX) and (IY) without on explicit offset. 
+* Allow (IX) and (IY) without an explicit offset. 
 * Define the pseudo value $ for PC.
 * Be more specific when an expression can't be evaluated.
 * Recursive labels are now properly detected (max 20 recursions).
