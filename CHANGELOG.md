@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1 - June 28, 2023
+
+* Remove the exclusion of the ZX81 ROM.
+
 ## 1.3.0 - June 28, 2023
 
 ### Debugger
