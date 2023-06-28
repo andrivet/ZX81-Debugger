@@ -14,7 +14,6 @@ tsconfig.json
 tests/
 src/
 out/
-data/
 node_modules/
 !node_modules/jsonc-parser/
 !node_modules/node-graphviz/
