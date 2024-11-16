@@ -4,10 +4,9 @@ import * as os from 'os';
 import * as path from 'path';
 import {LabelsClass, SourceFileEntry} from '../src/labels/labels';
 import {MemoryModelAllRam, MemoryModelUnknown} from '../src/remotes/MemoryModel/genericmemorymodels';
-import {MemoryModelZx128k, MemoryModelZx48k} from '../src/remotes/MemoryModel/zxspectrummemorymodels';
-import {MemoryModelZxNextOneROM, MemoryModelZxNextTwoRom} from '../src/remotes/MemoryModel/zxnextmemorymodels';
 import {MemoryModel} from '../src/remotes/MemoryModel/memorymodel';
 import {ReverseEngineeringLabelParser} from '../src/labels/reverseengineeringlabelparser';
+import { MemoryModelZX81_48k } from '../src/remotes/MemoryModel/zx81memorymodels';
 
 
 suite('Labels (revEng)', () => {
@@ -583,7 +582,7 @@ suite('Labels (revEng)', () => {
 			});
 
 			test('Target: MemoryModelZx48k', () => {	// NOSONAR
-				const mm = new MemoryModelZx48k();
+				const mm = new MemoryModelZX81_48k();
 				createSldFile(mm);
 
 				assert.equal(parser.createLongAddress(0x0000, 0), 0x10000);
@@ -594,84 +593,6 @@ suite('Labels (revEng)', () => {
 				assert.equal(parser.createLongAddress(0xA000, 5), 0x2A000);
 				assert.equal(parser.createLongAddress(0xC000, 6), 0x2C000);
 				assert.equal(parser.createLongAddress(0xE000, 7), 0x2E000);
-			});
-
-			test('Target: MemoryModelZx128k', () => {
-				const mm = new MemoryModelZx128k();
-				createSldFile(mm);
-
-				assert.equal(parser.createLongAddress(0x0000, 8), 0x90000);
-				assert.equal(parser.createLongAddress(0x2000, 9), 0xA2000);
-				assert.equal(parser.createLongAddress(0x4000, 5), 0x64000);
-				assert.equal(parser.createLongAddress(0x6000, 5), 0x66000);
-				assert.equal(parser.createLongAddress(0x8000, 2), 0x38000);
-				assert.equal(parser.createLongAddress(0xA000, 2), 0x3A000);
-				assert.equal(parser.createLongAddress(0xC000, 0), 0x1C000);
-				assert.equal(parser.createLongAddress(0xE000, 0), 0x1E000);
-
-				assert.equal(parser.createLongAddress(0xC000, 1), 0x2C000);
-				assert.equal(parser.createLongAddress(0xE000, 1), 0x2E000);
-
-				assert.equal(parser.createLongAddress(0xC000, 2), 0x3C000);
-				assert.equal(parser.createLongAddress(0xE000, 2), 0x3E000);
-
-				assert.equal(parser.createLongAddress(0xC000, 3), 0x4C000);
-				assert.equal(parser.createLongAddress(0xE000, 3), 0x4E000);
-
-				assert.equal(parser.createLongAddress(0xC000, 4), 0x5C000);
-				assert.equal(parser.createLongAddress(0xE000, 4), 0x5E000);
-
-				assert.equal(parser.createLongAddress(0xC000, 5), 0x6C000);
-				assert.equal(parser.createLongAddress(0xE000, 5), 0x6E000);
-
-				assert.equal(parser.createLongAddress(0xC000, 6), 0x7C000);
-				assert.equal(parser.createLongAddress(0xE000, 6), 0x7E000);
-
-				assert.equal(parser.createLongAddress(0xC000, 7), 0x8C000);
-				assert.equal(parser.createLongAddress(0xE000, 7), 0x8E000);
-
-				// This bank cannot be converted and should result in an exception
-				assert.throws(() => {
-					parser.createLongAddress(0xC000, 10);
-				}, Error);
-			});
-
-
-			test('Target: MemoryModelZxNextTwoRom', () => {
-				const mm = new MemoryModelZxNextTwoRom();
-				createSldFile(mm);
-
-				// RAM
-				for (let bank = 0; bank < 224; bank++) {
-					for (let address = 0; address < 0x10000; address += 0x2000) {
-						const expected = ((bank + 1) << 16) + address;
-						assert.equal(parser.createLongAddress(address, bank), expected);
-					}
-				}
-
-				// ROM
-				assert.equal(parser.createLongAddress(0x0000, 0xFC), 0x0FD0000);
-				assert.equal(parser.createLongAddress(0x2000, 0xFD), 0x0FE2000);
-				assert.equal(parser.createLongAddress(0x0000, 0xFE), 0x0FF0000);
-				assert.equal(parser.createLongAddress(0x2000, 0xFF), 0x1002000);
-			});
-
-
-			test('Target: MemoryModelZxNextOneROM', () => {
-				const mm = new MemoryModelZxNextOneROM();
-				createSldFile(mm);
-
-				// RAM
-				for (let bank = 0; bank < 224; bank++) {
-					for (let address = 0; address < 0x10000; address += 0x2000) {
-						const expected = ((bank + 1) << 16) + address;
-						assert.equal(parser.createLongAddress(address, bank), expected);
-					}
-				}
-
-				// ROM
-				assert.equal(parser.createLongAddress(0x0000, 0xFE), 0x0FF0000);
-				assert.equal(parser.createLongAddress(0x2000, 0xFF), 0x1002000);
 			});
 
 

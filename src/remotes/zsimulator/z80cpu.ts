@@ -82,7 +82,6 @@ export class Z80Cpu implements Serializable, ExecuteInterface {
 		this.prevHalted = false;
 
 		// Initialize Z80, call constructor
-		const z80n_enabled = zsim.Z80N;
 		this.z80 = new (Z80.Z80 as any)({
 			m1_mem_read: address => memory.m1Read8(address),
 			mem_read: address => memory.read8(address),
@@ -104,7 +103,7 @@ export class Z80Cpu implements Serializable, ExecuteInterface {
 					this.error = "io_write: " + e.message;
 				}
 			},
-			z80n_enabled: z80n_enabled
+			z80n_enabled: false
 		});
 	}
 

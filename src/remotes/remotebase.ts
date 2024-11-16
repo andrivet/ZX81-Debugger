@@ -1,17 +1,20 @@
-
+import {CompilationError, compile} from '@andrivet/z80-assembler';
+import * as fs from 'fs';
 import {Z80RegistersClass, Z80_REG, Z80Registers} from './z80registers';
 import {RefList} from '../misc/reflist';
 import {CallStackFrame} from '../callstackframe';
 import {EventEmitter} from 'events';
 import {GenericWatchpoint, GenericBreakpoint} from '../genericwatchpoint';
 import {Labels, SourceFileEntry} from '../labels/labels';
-import {Settings/*, ListFile*/} from '../settings/settings';
+import {Settings,/*, ListFile*/
+SjasmplusConfig} from '../settings/settings';
 import {Utility} from '../misc/utility';
 import {BaseMemory} from '../disassembler/core/basememory';
 import {Opcode, OpcodeFlag} from '../disassembler/core/opcode';
 import {Disassembly, DisassemblyClass} from '../disassembler/disassembly';
 import {MemoryBank, MemoryModel} from './MemoryModel/memorymodel';
 import {Log} from '../log';
+import { UnifiedPath } from '../misc/unifiedpath';
 
 
 
@@ -224,13 +227,49 @@ export class RemoteBase extends EventEmitter {
 		//
 	}
 
+	/**
+	 * Compile the source file
+	 */
+		public async compileCode(): Promise<CompilationError[]> {
+			// If the settings do contain an already compiled binary, do not compile
+			if(Settings.launch.load) return [];
+	
+			// Open the source file
+			const code = fs.readFileSync(Settings.launch.source, {encoding: 'ascii'});
+			// Compile it. If there are some includes, load them
+			const info = compile(Settings.launch.source, code, (filename: string) => 
+				fs.readFileSync(Utility.getAbsFilePath(filename), {encoding: 'ascii'}));
+			// In case of error, throw an exception
+			if(info.errs.length > 0)
+				return info.errs;
+	
+			// Get the base name of the source file
+			const basename = UnifiedPath.basename(Settings.launch.source);
+			// Construct a Uint8Array from the machine code array
+			const binary = Uint8Array.from(info.bytes);
+			// Construct the name of the binary file
+			const binPath = Utility.getAbsFilePath(UnifiedPath.changeExtension(basename, '.P'));
+			// Save the binary
+			fs.writeFileSync(binPath, binary);
+		
+			// Construct the name of the SLD file
+			const sldPath = Utility.getAbsFilePath(UnifiedPath.changeExtension(basename, '.sld'));
+			// Save the SLD file (debugging info)
+			fs.writeFileSync(sldPath, info.sld);
+			
+			if(!Settings.launch.sjasmplus) Settings.launch.sjasmplus = new Array<SjasmplusConfig>();
+			Settings.launch.sjasmplus.push({path: sldPath, srcDirs: [UnifiedPath.dirname(Settings.launch.source)], excludeFiles: []});
+			// Load the binary into memory (this will also load the SLD)
+			await this.loadBin(binPath);
+			return [];
+		}
 
 	/**
-	 * Loads the sna or nex file.
+	 * Loads the .P file.
 	 * Do not override.
 	 */
 	public async load(): Promise<void> {
-		// Load sna or nex file
+		// Load .P file
 		const loadPath = Settings.launch.load;
 		if (loadPath) {
 			await this.loadBin(loadPath);
@@ -253,7 +292,7 @@ export class RemoteBase extends EventEmitter {
 	 */
 	public async loadObjs(): Promise<void> {
 		// Load obj file(s)
-		for (const loadObj of Settings.launch.loadObjs) {
+		for (const loadObj of Settings.launch.binaries) {
 			if (loadObj.path) {
 				// Convert start address
 				const start = Labels.getNumberFromString64k(loadObj.start);
@@ -269,7 +308,7 @@ export class RemoteBase extends EventEmitter {
 
 
 	/**
-	 * Loads sna or nex file. (or any other file type supported by remote.)
+	 * Loads .P file. (or any other file type supported by remote.)
 	 * @param path The (absolute) path to the file.
 	 */
 	public async loadBin(path: string): Promise<void> {

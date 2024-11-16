@@ -29,8 +29,6 @@ import {Settings, SettingsParameters} from './settings/settings';
 import {DisassemblyVar, ImmediateMemoryValue, MemDumpVar, MemorySlotsVar, RegistersMainVar, RegistersSecondaryVar, ShallowVar, StackVar, StructVar} from './variables/shallowvar';
 import {BaseView} from './views/baseview';
 import {TextView} from './views/textview';
-import {ZxNextSpritePatternsView} from './views/zxnextspritepatternsview';
-import {ZxNextSpritesView} from './views/zxnextspritesview';
 import {Z80UnitTestRunner} from './z80unittests/z80unittestrunner';
 import {SmartDisassembler} from './disassembler/smartdisassembler';
 import {RenderCallGraph} from './disassembler/rendercallgraph';
@@ -39,6 +37,7 @@ import {RenderHtml} from './disassembler/renderhtml';
 import {ExceptionBreakpoints} from './exceptionbreakpoints';
 import {MemoryCommands} from './commands/memorycommands';
 import {Run} from './run';
+import { SystemVariablesVar } from './variables/zx81sysvar';
 
 
 
@@ -171,7 +170,7 @@ export class DebugSessionClass extends DebugSession {
 		this.setDebuggerLinesStartAt1(false);
 		this.setDebuggerColumnsStartAt1(false);
 		vscode.debug.onDidChangeActiveDebugSession(dbgSession => {
-			if (dbgSession?.configuration.type === 'dezog') {
+			if (dbgSession?.configuration.type === 'zx81debugger') {
 				if (this.debugConsoleSavedText) {
 					vscode.debug.activeDebugConsole.append(this.debugConsoleSavedText);
 					this.debugConsoleSavedText = '';
@@ -543,7 +542,6 @@ export class DebugSessionClass extends DebugSession {
 
 			// Initialize
 			BaseView.staticClearAll();
-			ZxNextSpritePatternsView.staticInit();
 
 			// Action on changed value (i.e. when the user changed a value
 			// vscode is informed and will e.g. update the watches.)
@@ -568,6 +566,7 @@ export class DebugSessionClass extends DebugSession {
 			this.scopes = [
 				new Scope("Registers", this.listVariables.addObject(new RegistersMainVar())),
 				new Scope("Registers 2", this.listVariables.addObject(new RegistersSecondaryVar())),
+				new Scope("System Variables", this.listVariables.addObject(new SystemVariablesVar())),
 				new Scope("Disassembly", this.listVariables.addObject(this.disassemblyVar)),
 				new Scope("Memory Banks", this.listVariables.addObject(new MemorySlotsVar())),
 				new Scope("Local Stack", this.listVariables.addObject(this.localStackVar))
@@ -699,12 +698,28 @@ export class DebugSessionClass extends DebugSession {
 						if (text) {
 							this.debugConsoleAppendLine(text);
 						}
-
+						
 						// Set default topOfStack (Could have been set by user or by loading a .p file)
 						if (Settings.launch.topOfStack === undefined) {
 							// If undefined, get it from the memory model
 							const topOfStack = Remote.memoryModel.getTopOfRam();
 							Settings.launch.topOfStack = "0x" + topOfStack.toString(16);
+						}
+						
+						const errors = await Remote.compileCode();
+						if(errors.length > 0) {
+							errors.forEach(err => DiagnosticsHandler.add(
+								err.message, 
+								'error', 
+								Utility.getAbsFilePath(err.position.filename), 
+								err.position.pos.line - 1, err.position.pos.offset
+							));
+							this.debugConsoleAppendLine("Error compiling, the debugger can't be started");
+							const doc = await vscode.workspace.openTextDocument(Utility.getAbsFilePath(errors[0].position.filename));
+							vscode.window.showTextDocument(doc, vscode.ViewColumn.Active, false);
+							Remote.terminate("Error compiling file");
+							resolve(undefined);
+							return;
 						}
 
 						// Load files
@@ -1133,9 +1148,9 @@ export class DebugSessionClass extends DebugSession {
 		// Set the right language ID, so that editor title menu buttons can be assigned
 //		vscode.languages.setTextDocumentLanguage(disasmTextDoc, 'disassembly');
 		// Set the path, so that editor title menu buttons can be assigned
-		// Note: For some reason the when clause "resourcePath === dezog.disassembler.disasmPath" in package.json does not work.
-		// But instead "resourcePath in dezog.disassembler.disasmPath" does work.
-		await vscode.commands.executeCommand('setContext', 'dezog.disassembler.disasmPath', [absFilePath]);
+		// Note: For some reason the when clause "resourcePath === zx81debugger.disassembler.disasmPath" in package.json does not work.
+		// But instead "resourcePath in zx81debugger.disassembler.disasmPath" does work.
+		await vscode.commands.executeCommand('setContext', 'zx81debugger.disassembler.disasmPath', [absFilePath]);
 		return disasmTextDoc;
 	}
 
@@ -2004,6 +2019,12 @@ export class DebugSessionClass extends DebugSession {
 		else if (cmd === '-mv') {
 			output = await MemoryCommands.evalMemViewByte(tokens);
 		}
+		else if (cmd === '-mvc') {
+			output = await MemoryCommands.evalMemViewColumns(tokens);
+		}
+		else if (cmd === '-zx81') {
+			output = await MemoryCommands.evalDisplayView();
+		}
 		else if (cmd === '-mvd') {
 			output = await MemoryCommands.evalMemViewDiff(tokens);
 		}
@@ -2013,17 +2034,11 @@ export class DebugSessionClass extends DebugSession {
 		else if (cmd === '-rmv') {
 			output = await MemoryCommands.evalRegisterMemView(tokens);
 		}
-		else if (cmd === '-patterns') {
-			output = await this.evalSpritePatterns(tokens);
-		}
 		else if (cmd === '-wpadd') {
 			output = await this.evalWpAdd(tokens);
 		}
 		else if (cmd === '-wprm') {
 			output = await this.evalWpRemove(tokens);
-		}
-		else if (cmd === '-sprites') {
-			output = await this.evalSprites(tokens);
 		}
 		else if (cmd === '-state') {
 			output = await this.evalStateSaveRestore(tokens);
@@ -2407,6 +2422,7 @@ the value correspondents to a label.
 "-memmodel": Prints slot and bank info of the currently used memory model.
 "-ml address filepath": Loads a binary file into memory. The filepath is relative to the TMP directory.
 "-ms address size filename": Saves a memory dump to a file. The file is saved to the temp directory.
+"-zx81": Show the ZX81 simulator.
 "-msetb address value [repeat]":
 	- address: The address to fill. Can also be a label or expression.
 	- value: The byte value to set.
@@ -2427,16 +2443,7 @@ the value correspondents to a label.
 "-mv address size [address_n size_n]*": Memory view at 'address' with 'size' bytes. Will open a new view to display the memory contents.
 "-mvd address size [address_n size_n]*": Opens a memory view that can be used for comparison. I.e. you start at some time than later you update the view and then you can make a diff and search e.g. for all values that have been decremented by 1.
 "-mvw address size [address_n size_n]* [big]": Memory view at 'address' with 'size' words. Like -mv but display unit is word instead of byte. Normally the display is little endian. This can be changed by adding "big" as last argument.
-"-patterns [index[+count|-endindex] [...]": Shows the tbblue sprite patterns beginning at 'index' until 'endindex' or a number of 'count' indices.
-	The values can be omitted. 'index' defaults to 0 and 'count' to 1.
-	Without any parameter it will show all sprite patterns.
-	You can concat several ranges.
-	Example: "-patterns 10-15 20+3 33" will show sprite patterns at index 10, 11, 12, 13, 14, 15, 20, 21, 22, 33.
 "-rmv": Shows the memory register view. I.e. a dynamic view with the memory contents the registers point to.
-"-sprites [slot[+count|-endslot] [...]": Shows the tbblue sprite registers beginning at 'slot' until 'endslot' or a number of 'count' slots.
-  The values can be omitted. 'slot' defaults to 0 and 'count' to 1. You can concat several ranges.
-	Example: "-sprite 10-15 20+3 33" will show sprite slots 10, 11, 12, 13, 14, 15, 20, 21, 22, 33.
-	Without any parameter it will show all visible sprites automatically.
 "-state save|restore|list|clear|clearall [statename]": Saves/restores the current state. I.e. the complete RAM + the registers.
 "-wpadd address [size] [type]": Adds a watchpoint. See below.
 "-wprm address [size] [type]": Removes a watchpoint.
@@ -2459,7 +2466,6 @@ Some examples:
 "-eval 2+3*5": Results to "17".
 "-msetb mylabel 3": Sets the data at memory location 'mylabel' to 3.
 "-mv 0 10": Shows the memory at address 0 to address 9.
-"-sprites": Shows all visible sprites.
 "-state save 1": Stores the current state as 'into' 1.
 "-state restore 1": Restores the state 'from' 1.
 
@@ -2769,150 +2775,6 @@ E.g. use "-help -view" to put the help text in an own view.
 			condition: ''
 		};
 		await Remote.removeWatchpoint(wp);
-
-		// Send response
-		return 'OK';
-	}
-
-
-	/**
-	 * Show the sprite patterns in a view.
-	 * @param tokens The arguments.
-	   * @returns A Promise<string> with a text to print.
-	 */
-	protected async evalSpritePatterns(tokens: Array<string>): Promise<string> {
-		// Evaluate arguments
-		let title;
-		let params: Array<number> | undefined = [];
-		if (tokens.length === 0) {
-			// The view should choose the visible sprites automatically
-			title = 'Sprite Patterns: 0-63';
-			params.push(0);
-			params.push(64);
-		}
-		else {
-			// Create title
-			title = 'Sprite Patterns: ' + tokens.join(' ');
-			// Get slot and count/endslot
-			while (true) {
-				// Get parameter
-				const param = tokens.shift();
-				if (!param)
-					break;
-				// Evaluate
-				const match = /([^+-]*)(([-+])(.*))?/.exec(param);
-				if (!match) // Error Handling
-					throw new Error("Can't parse: '" + param + "'");
-				// start slot
-				const start = Utility.parseValue(match[1]);
-				if (isNaN(start))	// Error Handling
-					throw new Error("Expected slot but got: '" + match[1] + "'");
-				// count
-				let countValue = 1;
-				if (match[3]) {
-					countValue = Utility.parseValue(match[4]);
-					if (isNaN(countValue))	// Error Handling
-						throw new Error("Can't parse: '" + match[4] + "'");
-					if (match[3] === "-")	// turn range into count
-						countValue += 1 - start;
-				}
-				// Check
-				if (countValue <= 0)	// Error Handling
-					throw new Error("Not allowed count: '" + match[0] + "'");
-				// Add
-				params.push(start);
-				params.push(countValue);
-			}
-
-			const slotString = tokens[0] || '0';
-			const slot = Utility.parseValue(slotString);
-			if (isNaN(slot)) {
-				// Error Handling: Unknown argument
-				throw new Error("Expected slot but got: '" + slotString + "'");
-			}
-			const countString = tokens[1] || '1';
-			const count = Utility.parseValue(countString);
-			if (isNaN(count)) {
-				// Error Handling: Unknown argument
-				throw new Error("Expected count but got: '" + countString + "'");
-			}
-		}
-
-		// Create new view
-		const panel = new ZxNextSpritePatternsView(title, params);
-		await panel.update();
-
-		// Send response
-		return 'OK';
-	}
-
-
-	/**
-	 * Show the sprites in a view.
-	 * @param tokens The arguments.
-	   * @returns A Promise<string> with a text to print.
-	 */
-	protected async evalSprites(tokens: Array<string>): Promise<string> {
-		// First check for tbblue
-		// Evaluate arguments
-		let title;
-		let params: Array<number> | undefined;
-		if (tokens.length === 0) {
-			// The view should choose the visible sprites automatically
-			title = 'Visible Sprites';
-		}
-		else {
-			// Create title
-			title = 'Sprites: ' + tokens.join(' ');
-			// Get slot and count/endslot
-			params = [];
-			while (true) {
-				// Get parameter
-				const param = tokens.shift();
-				if (!param)
-					break;
-				// Evaluate
-				const match = /([^+-]*)(([-+])(.*))?/.exec(param);
-				if (!match) // Error Handling
-					throw new Error("Can't parse: '" + param + "'");
-				// start slot
-				const start = Utility.parseValue(match[1]);
-				if (isNaN(start))	// Error Handling
-					throw new Error("Expected slot but got: '" + match[1] + "'");
-				// count
-				let countValue = 1;
-				if (match[3]) {
-					countValue = Utility.parseValue(match[4]);
-					if (isNaN(countValue))	// Error Handling
-						throw new Error("Can't parse: '" + match[4] + "'");
-					if (match[3] === "-")	// turn range into count
-						countValue += 1 - start;
-				}
-				// Check
-				if (countValue <= 0)	// Error Handling
-					throw new Error("Not allowed count: '" + match[0] + "'");
-				// Add
-				params.push(start);
-				params.push(countValue);
-			}
-
-			const slotString = tokens[0] || '0';
-			const slot = Utility.parseValue(slotString);
-			if (isNaN(slot)) {
-				// Error Handling: Unknown argument
-				throw new Error("Expected slot but got: '" + slotString + "'");
-			}
-			const countString = tokens[1] || '1';
-			const count = Utility.parseValue(countString);
-			if (isNaN(count)) {
-				// Error Handling: Unknown argument
-				throw new Error("Expected count but got: '" + countString + "'");
-			}
-		}
-
-		// Create new view
-		const panel = new ZxNextSpritesView(title, params);
-		await panel.update();
 
 		// Send response
 		return 'OK';

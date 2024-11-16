@@ -768,8 +768,6 @@ export class DzrpBufferRemote extends DzrpQueuedRemote {
 
 	/**
 	 * Sends the command to set all breakpoints.
-	 * For the ZXNext all breakpoints are set at once just before the
-	 * next 'continue' is executed.
 	 * @param bpAddresses The breakpoint addresses. Each 0x0000-0xFFFF.
 	 * @returns A Promise with the memory contents from each breakpoint address.
 	 */

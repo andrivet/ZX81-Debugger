@@ -1,7 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import {readFileSync} from 'fs';
-import {PackageInfo} from '../whatsnew/packageinfo';
 import {HelpView} from './helpview';
 //import {UnifiedPath} from '../misc/unifiedpath';
 
@@ -27,9 +24,6 @@ export class HelpProvider implements vscode.WebviewViewProvider {
 		// Handle messages from the webview
 		this.webview.onDidReceiveMessage(message => {
 			switch (message.command) {
-				case 'donateClicked':
-					this.openDonateWebView();
-					break;
 				case 'linkClicked':
 					// Strip chapter from link
 					const link = message.data;
@@ -93,18 +87,9 @@ li > ul {
     padding-left: 1.5em;
 }
 
-/* Donate button. */
-.button-donate {
-  border: none;
-  background-color: steelblue;
-  color: white;
-}
-
 </style>
 
 <body>
-
-<!--\${donate}-->
 
 ${toc}
 
@@ -153,59 +138,12 @@ initAnchors();
 </script>
 </html>
 `;
-
-		// Get donated state
-		const configuration = PackageInfo.getConfiguration();
-		const donated = configuration.get<boolean>('donated');
-		// Set button
-		if (!donated) {
-			mainHtml = mainHtml.replace('<!--${donate}-->', `
-		<button class="button-donate" style="float:right" onclick="
-	vscode.postMessage({command: 'donateClicked'})">Donate...</button>`);
-		}
-
-
 		// Add a Reload and Copy button for debugging
 		//mainHtml = mainHtml.replace('<body>', '<body><button onclick="initAnchors()">Init</button><button onclick="copyHtmlToClipboard()">Copy HTML to clipboard</button>');
 
 		// Set content
 		this.webview.html = mainHtml;
 	}
-
-
-	/**
-	 * Opens a webview with donation information.
-	 */
-	protected openDonateWebView() {
-		// Create vscode panel view
-		const vscodePanel = vscode.window.createWebviewPanel('', '', {preserveFocus: true, viewColumn: vscode.ViewColumn.Nine});
-		vscodePanel.title = 'Donate...';
-		// Read the file
-		const extPath = PackageInfo.extension.extensionPath;
-		const htmlFile = path.join(extPath, 'html/donate.html');
-		let html = readFileSync(htmlFile).toString();
-		// Exchange local path
-		const resourcePath = vscode.Uri.file(extPath);
-		const vscodeResPath = vscodePanel.webview.asWebviewUri(resourcePath).toString();
-		html = html.replace('${vscodeResPath}', vscodeResPath);
-
-		// Handle messages from the webview
-		vscodePanel.webview.options = {enableScripts: true};
-		vscodePanel.webview.onDidReceiveMessage(message => {
-			switch (message.command) {
-				case 'showExtension':
-					(async () => {
-						// Switch to Extension Manager
-						await vscode.commands.executeCommand("workbench.extensions.search", PackageInfo.extension.packageJSON.publisher);
-					})();
-					break;
-			}
-		});
-
-		// Set html
-		vscodePanel.webview.html = html;
-	}
-
 
 	/**
 	 * Creates a help view window with contents

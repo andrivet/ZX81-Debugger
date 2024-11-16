@@ -18,7 +18,7 @@ export class DiagnosticsHandler {
 	 * Subscribes the diagnostics.
 	 */
 	public static Init(context: vscode.ExtensionContext) {
-		DiagnosticsHandler.diagnosticsCollection = vscode.languages.createDiagnosticCollection("DeZog");
+		DiagnosticsHandler.diagnosticsCollection = vscode.languages.createDiagnosticCollection("ZX81 Debugger");
 		context.subscriptions.push(DiagnosticsHandler.diagnosticsCollection);
 		CustomCode.addDiagnosticsErrorFunc = DiagnosticsHandler.add;
 		LabelsClass.addDiagnosticsErrorFunc = DiagnosticsHandler.add;
@@ -48,7 +48,7 @@ export class DiagnosticsHandler {
 		const range = new vscode.Range(line, column, line, Number.MAX_VALUE);
 		const diagSeverity = (severity == 'error') ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning;
 		const diagnostic = new vscode.Diagnostic(range, message, diagSeverity);
-		diagnostic.source = 'DeZog';
+		diagnostic.source = 'X81 Debugger';
 		const allFileProblems: readonly vscode.Diagnostic[] = DiagnosticsHandler.diagnosticsCollection.get(uri) ?? [];
 		DiagnosticsHandler.diagnosticsCollection.set(uri, [...allFileProblems, diagnostic]);
 	}

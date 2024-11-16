@@ -214,7 +214,7 @@ export class MemoryDumpViewWord extends MemoryDumpView {
 		// For highlighting the found addresses
 		let foundAddressesHexObjs = [];
 
-		// The changed memory. Is an array of triples: [address, value, ASCII]
+		// The changed memory. Is an array of triples: [address, value, char]
 		let changedAddressValues = [];
 
 		// The selected found address.

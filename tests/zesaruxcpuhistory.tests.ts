@@ -4,7 +4,7 @@ import { Format } from '../src/disassembler/core/format';
 import * as assert from 'assert';
 import {ZesaruxCpuHistory, DecodeZesaruxHistoryInfo} from '../src/remotes/zesarux/zesaruxcpuhistory';
 import {Z80RegistersClass, Z80Registers} from '../src/remotes/z80registers';
-import {DecodeZesaruxRegistersZx48k, DecodeZesaruxRegistersZxNext} from '../src/remotes/zesarux/decodezesaruxdata';
+import {DecodeZesaruxRegistersZx16k, DecodeZesaruxRegistersZx48k} from '../src/remotes/zesarux/decodezesaruxdata';
 import {Settings} from '../src/settings/settings';
 import {ZesaruxSocket, zSocket} from '../src/remotes/zesarux/zesaruxsocket';
 import {RefList} from '../src/misc/reflist';
@@ -13,7 +13,7 @@ import {RemoteFactory} from '../src/remotes/remotefactory';
 import {CpuHistory} from '../src/remotes/cpuhistory';
 import {Labels} from '../src/labels/labels';
 import {MemoryModelUnknown} from '../src/remotes/MemoryModel/genericmemorymodels';
-import {MemoryModelZx48k} from '../src/remotes/MemoryModel/zxspectrummemorymodels';
+import { MemoryModelZX81_48k } from '../src/remotes/MemoryModel/zx81memorymodels';
 
 
 
@@ -45,8 +45,7 @@ suite('ZesaruxCpuHistory', () => {
 	});
 
 	function createCpuHistory(): ZesaruxCpuHistory {
-		//const decoder = new DecodeZesaruxRegisters(8);
-		const decoder = new DecodeZesaruxRegistersZxNext();
+		const decoder = new DecodeZesaruxRegistersZx16k();
 		Z80Registers.decoder = decoder;
 		const hist = new ZesaruxCpuHistory();
 		hist.decoder = new DecodeZesaruxHistoryInfo();
@@ -556,7 +555,7 @@ suite('ZesaruxCpuHistory', () => {
 			Z80RegistersClass.createRegisters(launch);
 			RemoteFactory.createRemote('zrcp');
 			Z80Registers.decoder = new DecodeZesaruxRegistersZx48k();
-			const mm = new MemoryModelZx48k();
+			const mm = new MemoryModelZX81_48k();
 			mm.init(); // Required for setting the funcCreateLongAddress and funcGetSlotFromAddress
 			//Remote.init();
 			history = CpuHistory;
@@ -848,7 +847,7 @@ suite('ZesaruxCpuHistory', () => {
 		setup(() => {
 			Z80RegistersClass.createRegisters(launch);
 			Z80Registers.decoder = new DecodeZesaruxRegistersZx48k();
-			const mm = new MemoryModelZx48k();
+			const mm = new MemoryModelZX81_48k();
 			mm.init(); // Required for setting the funcCreateLongAddress and funcGetSlotFromAddress
 			RemoteFactory.createRemote('zrcp');
 			//Remote.init();

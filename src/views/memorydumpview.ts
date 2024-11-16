@@ -47,6 +47,12 @@ export class MemoryDumpView extends BaseView {
 	/// The memory dump to show.
 	protected memDump = new MemoryDump();
 
+	/// The number of columns
+	protected columns = MEM_DUMP_BOUNDARY;
+
+	/// Should the dump starts on a boundary
+	protected boundary = true;
+
 	/// Used to store the previous register addresses, e.g. HL, DE etc.
 	protected prevRegAddr = new Map<string, number>();
 
@@ -198,6 +204,10 @@ export class MemoryDumpView extends BaseView {
 		}
 	}
 
+	public setColumns(columns: number) {
+		this.columns = columns;
+		this.boundary = false;
+	}
 
 	/**
 	 * Adds a new memory block to display.
@@ -326,12 +336,12 @@ export class MemoryDumpView extends BaseView {
 			for (const metaBlock of this.memDump.metaBlocks) {
 				// Get changes
 				const addrValues = metaBlock.getChangedValues();
-				// Convert values to [address, hex-text , ascii-text]
+				// Convert values to [address, hex-text , zx81-text]
 				addrValues.forEach(addrVal => {
 					allAddrValsText.push([
 						addrVal[0],
 						Utility.getHexString(addrVal[1], 2),
-						Utility.getHTMLChar(addrVal[1])
+						this.vscodePanel.webview.asWebviewUri(vscode.Uri.file(Utility.getZX81ImageSrc(addrVal[1]))).toString()
 					]);
 				});
 			}
@@ -481,14 +491,14 @@ body.vscode-light {
 	border-radius: 3px;
   	background-color: var(--foundAddressBgColor);
 }
-.foundAddressAscii {
+.foundAddressChar {
   	background-color: var(--foundAddressBgColor);
 }
 .selectedAddress {
 	border-radius: 3px;
   	background-color: var(--selectedAddressBgColor);
 }
-.selectedAddressAscii {
+.selectedAddressChar {
   	background-color: var(--selectedAddressBgColor);
 }
 </style>
@@ -496,7 +506,7 @@ body.vscode-light {
 <script>
 // The previously selected objects.
 let prevSelectedHex = [];
-let prevSelectedAscii = [];
+let prevSelectedChar = [];
 
 // Values of option buttons
 let caseSensitive = false;
@@ -530,10 +540,10 @@ function clearSelection() {
 	// De-select previous selection
 	for(const obj of prevSelectedHex)
 		obj.classList.remove("selectedAddress");
-	for(const obj of prevSelectedAscii)
-		obj.classList.remove("selectedAddressAscii");
+	for(const obj of prevSelectedChar)
+		obj.classList.remove("selectedAddressChar");
 	prevSelectedHex = [];
-	prevSelectedAscii = [];
+	prevSelectedChar = [];
 }
 
 function selectAddress() {
@@ -567,11 +577,11 @@ function selectAddress() {
 			}
 		}
 		if(allAsciiObjs) {	// Check if for memorydumpviewword
-			const spanObjs = getAsciiObjsForAddress(address+i);
+			const spanObjs = getCharObjsForAddress(address+i);
 			if(spanObjs) {
 				for(const obj of spanObjs) {
-					obj.classList.add("selectedAddressAscii");
-					prevSelectedAscii.push(obj);
+					obj.classList.add("selectedAddressChar");
+					prevSelectedChar.push(obj);
 				}
 			}
 		}
@@ -715,7 +725,7 @@ window.addEventListener('load', () => {
 		<script>
 		const vscode = acquireVsCodeApi();
 
-		// The changed memory. Is an array of triples: [address, value, ASCII]
+		// The changed memory. Is an array of triples: [address, value, Char]
 		let changedAddressValues = [];
 
 		// The selected found address.
@@ -815,7 +825,7 @@ window.addEventListener('load', () => {
 			return document.querySelectorAll("td[address='"+address+"']");
 		}
 
-		function getAsciiObjsForAddress(address) {
+		function getCharObjsForAddress(address) {
 			return document.querySelectorAll("span[address='"+address+"']");
 		}
 
@@ -832,8 +842,8 @@ window.addEventListener('load', () => {
 					for(const obj of objs) {
 						obj.title = message.text;
 					}
-					// ASCII
-					const spanObjs = getAsciiObjsForAddress(message.address);
+					// Char
+					const spanObjs = getCharObjsForAddress(message.address);
 					for(const obj of spanObjs) {
 						obj.title = message.text;
 					}
@@ -850,7 +860,7 @@ window.addEventListener('load', () => {
 				case 'setAddressColor':
 				{
 					const className = "registerPointer"+message.register;
-					const classNameAscii = "registerPointerAscii"+message.register;
+					const classNameAscii = "registerPointerChar"+message.register;
 
 					// Remove old
 					if(message.prevAddress) {
@@ -858,10 +868,10 @@ window.addEventListener('load', () => {
 						for(const obj of objs) {
 							obj.classList.remove(className);
 						}
-						// ASCII
-						const spanObjs = getAsciiObjsForAddress(message.prevAddress);
+						// Char
+						const spanObjs = getCharObjsForAddress(message.prevAddress);
 						for(const obj of spanObjs) {
-							obj.classList.remove(classNameAscii);
+							obj.classList.remove(classNameChar);
 						}
 					}
 
@@ -870,10 +880,10 @@ window.addEventListener('load', () => {
 					for(const obj of objs) {
 						obj.classList.add(className);
 					}
-					// ASCII
-					const spanObjs = getAsciiObjsForAddress(message.address);
+					// Char
+					const spanObjs = getCharObjsForAddress(message.address);
 					for(const obj of spanObjs) {
-						obj.classList.add(classNameAscii);
+						obj.classList.add(classNameChar);
 					}
 				 }  break;
 
@@ -913,8 +923,8 @@ window.addEventListener('load', () => {
 							obj.classList.remove("valueChanged");
 						}
 						// Get Ascii for address
-						const asciiObjs = getAsciiObjsForAddress(address);
-						for(const obj of asciiObjs) {
+						const asciiObjs = getCharObjsForAddress(address);
+						for(const obj of CharObjs) {
 							obj.classList.remove("valueChanged");
 						}
 					}
@@ -930,9 +940,9 @@ window.addEventListener('load', () => {
 							obj.firstChild.textContent = addrVal[1];
 							obj.classList.add("valueChanged");
 						}
-						// Get Ascii for address
-						const asciiObjs = getAsciiObjsForAddress(address);
-						for(const obj of asciiObjs) {
+						// Get ZX81 chars for address
+						const charObjs = getCharObjsForAddress(address);
+						for(const obj of charObjs) {
 							obj.firstChild.textContent = addrVal[2];
 							obj.classList.add("valueChanged");
 						}
@@ -954,17 +964,17 @@ window.addEventListener('load', () => {
 					for(const obj of allHexObjs) {
 						obj.classList.remove("foundAddress");
 					}
-					// ASCII
-					if(!allAsciiObjs) {
-						allAsciiObjs = document.querySelectorAll("span[address]");
-						allAsciiMap = new Map();
-						for(const elem of allAsciiObjs) {
+					// Char
+					if(!allCharObjs) {
+						allCharObjs = document.querySelectorAll("span[address]");
+						allChatMap = new Map();
+						for(const elem of allCharObjs) {
 							const addr = elem.getAttribute('address');
-							allAsciiMap.set(parseInt(addr), elem);
+							allChatMap.set(parseInt(addr), elem);
 						}
 					}
-					for(const obj of allAsciiObjs) {
-						obj.classList.remove("foundAddressAscii");
+					for(const obj of allCharObjs) {
+						obj.classList.remove("foundAddressChar");
 					}
 
 					// Check for error (message.addresses == undefined)
@@ -991,12 +1001,12 @@ window.addEventListener('load', () => {
 						}
 					}
 
-					// ASCII
+					// Char
 					for(let i=0; i<selectedLength; i++) {
 						for(const address of foundAddresses) {
-							const elem = allAsciiMap.get(address+i);
+							const elem = allCharMap.get(address+i);
 							if(elem)
-								elem.classList.add("foundAddressAscii");
+								elem.classList.add("foundAddressChar");
 						}
 					}
 
@@ -1050,7 +1060,7 @@ window.addEventListener('load', () => {
 			return '';
 
 		const addressColor = Settings.launch.memoryViewer.addressColor;
-		const asciiColor = Settings.launch.memoryViewer.asciiColor;
+		const charColor = Settings.launch.memoryViewer.charColor;
 		const bytesColor = Settings.launch.memoryViewer.bytesColor;
 		const changedColor = "red";
 
@@ -1061,7 +1071,16 @@ window.addEventListener('load', () => {
 				color: ${bytesColor};
 			}
 			td span {
-				color: ${asciiColor};
+				color: ${charColor};
+			}
+			td span img {
+				width: 8px;
+				height: 8px;
+			}
+			td.char {
+				width: 100%;
+				overflow: hidden;
+				white-space: nowrap;
 			}
 			.addressClmn {
 				color: ${addressColor};
@@ -1069,6 +1088,10 @@ window.addEventListener('load', () => {
 				cursor: pointer;
 			}
 			.valueChanged {
+				border: 1px solid ${changedColor};
+				box-sizing: border-box;
+			}
+			.addressChanged {
 				background-color: ${changedColor};
 			}
 			</style>
@@ -1104,7 +1127,7 @@ window.addEventListener('load', () => {
 		table += '\n</tr>';
 
 		// Table contents
-		let ascii = '';
+		let char = '';
 		let startOfLine = true;
 		for (let k = 0; k < len; k++) {
 			// Address but bound to 64k to forecome any wrap around
@@ -1115,12 +1138,12 @@ window.addEventListener('load', () => {
 				let addrText = Utility.getHexString(addr64k, 4) + ':';
 				table += '<tr>\n<td class="addressClmn" addressLine="' + addr64k + '" onmouseover="mouseOverAddress(this)">' + addrText + '</td>\n';
 				table += '<td> </td>\n';
-				ascii = '';
+				char = '';
 				startOfLine = false;
 				if (i != 0) {
 					// Draw empty clmns
 					table += '<td></td>\n'.repeat(i);
-					ascii += '<span>&nbsp;</span>'.repeat(i);
+					char += '<span>&nbsp;</span>'.repeat(i);
 					address += i;
 				}
 			}
@@ -1143,14 +1166,14 @@ window.addEventListener('load', () => {
 			table += '<td address="' + address + '" ondblclick="makeEditable(this)" onmouseover="mouseOverValue(this)">' + valueText + '</td>\n';
 
 
-			// Convert to ASCII (->html)
-			ascii += '<span address="' + address + '" onmouseover="mouseOverValue(this)">' + Utility.getHTMLChar(value) + '</span>';
+			// Convert to ZX81 char (->html)
+			char += '<span address="' + address + '" onmouseover="mouseOverValue(this)">' + Utility.getZX81ImageSrc(value) + '</span>';
 
 			// Check end of line
 			if (i == clmns - 1) {
-				// print ASCII characters.
+				// print ZX81 characters.
 				table += '<td> </td>\n';
-				table += '<td>' + ascii + '</td>\n';
+				table += '<td>' + char + '</td>\n';
 				// end of a new line
 				table += '</tr>\n';
 			}
@@ -1251,7 +1274,7 @@ window.addEventListener('load', () => {
 				background-color: ${arr[i + 1]};
 				border-radius: 3px;
 			}
-			.registerPointerAscii${arr[i]} {
+			.registerPointerChar${arr[i]} {
 				color: white;
 				background-color: ${arr[i + 1]};
 				border-radius: 3px;

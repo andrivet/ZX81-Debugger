@@ -1,8 +1,6 @@
 import {vscode} from "./vscode-import";
-import {ZxAudioBeeper, zxAudioBeeper} from "./zxaudiobeeper";
 import {Zx81UlaDraw} from "./zx81uladraw";
 import {Zx81HiResUlaDraw} from "./zx81hiresuladraw";
-import {SpectrumUlaDraw} from "./spectrumuladraw";
 import {VisualMem} from "./visualmem";
 import {joystickObjs, initJoystickPolling} from "./joysticks";
 import {UIAPI, UiBit, UiByte} from "./helper";
@@ -90,8 +88,6 @@ window.addEventListener('message', event => {// NOSONAR
 
 		case 'cpuStopped':
 			// Z80 CPU was stopped, t-states do not advance.
-			if (zxAudioBeeper)
-				zxAudioBeeper.stop();
 			break;
 
 		case 'updateScreen':
@@ -124,14 +120,6 @@ window.addEventListener('message', event => {// NOSONAR
 
 			if (message.visualMem) {
 				VisualMem.drawVisualMemory(message.visualMem);
-			}
-
-			if (zxAudioBeeper) {
-				zxAudioBeeper.resume();
-				if (message.audio) {
-					const audio = message.audio;
-					zxAudioBeeper.writeBeeperSamples(audio);
-				}
 			}
 
 			if (message.zxnDMA) {
@@ -199,55 +187,9 @@ function initSimulation(message) {
 				break;
 			case 'spectrum':
 			default:
-				ulaDraw = new SpectrumUlaDraw(screenImg, message.ulaOptions);
+				ulaDraw = new Zx81UlaDraw(screenImg, message.ulaOptions);
 				break;
 		}
-	}
-
-	// Get Beeper output object
-	const beeperOutput = document.getElementById("beeper.output");
-	if (beeperOutput) {
-		// Singleton for audio
-		ZxAudioBeeper.createZxAudioBeeper(message.audioSampleRate, beeperOutput);
-		if (zxAudioBeeper.sampleRate != message.audioSampleRate) {
-			// Send warning to vscode
-			vscode.postMessage({
-				command: 'warning',
-				text: "Sample rate of " + message.audioSampleRate + "Hz could not be set. Try setting it to e.g. " + zxAudioBeeper.sampleRate + "Hz instead."
-			});
-		}
-		zxAudioBeeper.setVolume(message.volume);
-
-		// Get Volume slider
-		const volumeSlider = document.getElementById("audio.volume") as HTMLInputElement;
-		volumeSlider.value = zxAudioBeeper.getVolume().toString();
-	}
-
-	// zxnDMA
-	const dmaActiveHtml = document.getElementById("zxnDMA.dmaActive") as HTMLLabelElement;
-	if (dmaActiveHtml) {
-		zxnDmaHtml = {
-			dmaActive: dmaActiveHtml,
-			portAstartAddress: document.getElementById("zxnDMA.portAstartAddress") as HTMLLabelElement,
-			portBstartAddress: document.getElementById("zxnDMA.portBstartAddress") as HTMLLabelElement,
-			blockLength: document.getElementById("zxnDMA.blockLength") as HTMLLabelElement,
-			transferDirectionPortAtoB: document.getElementById("zxnDMA.transferDirectionPortAtoB") as HTMLLabelElement,
-			portAmode: document.getElementById("zxnDMA.portAmode") as HTMLLabelElement,
-			portBmode: document.getElementById("zxnDMA.portBmode") as HTMLLabelElement,
-			portAadd: document.getElementById("zxnDMA.portAadd") as HTMLLabelElement,
-			portBadd: document.getElementById("zxnDMA.portBadd") as HTMLLabelElement,
-			portAcycleLength: document.getElementById("zxnDMA.portAcycleLength") as HTMLLabelElement,
-			portBcycleLength: document.getElementById("zxnDMA.portBcycleLength") as HTMLLabelElement,
-			zxnPrescalar: document.getElementById("zxnDMA.zxnPrescalar") as HTMLLabelElement,
-			mode: document.getElementById("zxnDMA.mode") as HTMLLabelElement,
-			eobAction: document.getElementById("zxnDMA.eobAction") as HTMLLabelElement,
-			readMask: document.getElementById("zxnDMA.readMask") as UiByte,
-			statusByte: document.getElementById("zxnDMA.statusByte") as UiByte,
-			blockCounter: document.getElementById("zxnDMA.blockCounter") as HTMLLabelElement,
-			portAaddressCounter: document.getElementById("zxnDMA.portAaddressCounter") as HTMLLabelElement,
-			portBaddressCounter: document.getElementById("zxnDMA.portBaddressCounter") as HTMLLabelElement,
-			lastOperation: document.getElementById("zxnDMA.lastOperation") as HTMLLabelElement
-		};
 	}
 
 	// Joysticks (Interface II)
@@ -504,20 +446,6 @@ globalThis.reloadCustomLogicAndUi = function () {
 	// Send request to vscode
 	vscode.postMessage({
 		command: 'reloadCustomLogicAndUi'
-	});
-}
-
-
-// Called when the volume was changed by the user.
-globalThis.volumeChanged = function (volumeStr: string) {
-	// Convert to number
-	const volume = parseFloat(volumeStr);
-	// Inform beeper
-	zxAudioBeeper.setVolume(volume);
-	// Inform vscode
-	vscode.postMessage({
-		command: 'volumeChanged',
-		value: volume
 	});
 }
 

@@ -547,6 +547,15 @@ export class Utility {
 		return res;
 	}
 
+	/**
+	 * Get the path of a ZX81 character.
+	 * @param value The value of the character.
+	 * @returns the URI of an asset.
+	 */
+	public static getZX81ImageSrc(value: number): string {
+		return '/chars/ZX81-0x' + this.getHexString(value, 2) + '.png';
+	}
+
 
 	/**
 	 * Returns a formatted number.

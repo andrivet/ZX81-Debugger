@@ -1,9 +1,5 @@
 import {readFileSync} from 'fs';
 import {Utility} from '../misc/utility';
-import {MemoryModelAllRam, MemoryModelUnknown} from '../remotes/MemoryModel/genericmemorymodels';
-import {MemoryModelZx128k, MemoryModelZx16k, MemoryModelZx48k} from '../remotes/MemoryModel/zxspectrummemorymodels';
-import {MemoryModelZxNextBase} from '../remotes/MemoryModel/zxnextmemorymodels';
-import {MemoryModelColecoVision} from '../remotes/MemoryModel/colecovisionmemorymodels';
 import {AsmConfigBase, SjasmplusConfig} from '../settings/settings';
 import {LabelParserBase} from './labelparserbase';
 import {SourceFileEntry} from './labels';
@@ -15,12 +11,7 @@ import {SourceFileEntry} from './labels';
  */
 export enum SjasmplusMemoryModel {
 	NONE = 0, // Nothing found in sld file (e.g. also ZX48K). Could also be NONE selected in sjasmplus file.
-	NOSLOT64K,
-	//ZX16K,	// not used, no sld file is generated in this mode
-	ZX48K,
-	ZX128K,
-	ZXNEXT,
-	// All others are not used at the moment.
+	NOSLOT64K
 }
 
 
@@ -220,11 +211,11 @@ export class SjasmplusSldLabelParser extends LabelParserBase {
 
 		// Check
 		if (bankSize === undefined) {
-			this.throwError("Could not find bank size in SLD file. Did you forget to set the 'DEVICE' in your assembler file? If you use a non ZX Spectrum device you need to choose NOSLOT64K.");
+			this.throwError("Could not find bank size in SLD file. Did you forget to set the 'DEVICE' in your assembler file? For ZX81, you need to choose NOSLOT64K.");
 		}
 		this.bankSize = bankSize;
 		if (slots === undefined) {
-			this.throwError("Could not find slots in SLD file. Did you forget to set the 'DEVICE' in your assembler file? If you use a non ZX Spectrum device you need to choose NOSLOT64K.");
+			this.throwError("Could not find slots in SLD file. Did you forget to set the 'DEVICE' in your assembler file? For ZX81, you need to choose NOSLOT64K.");
 		}
 		this.slots = slots;
 
@@ -421,21 +412,11 @@ export class SjasmplusSldLabelParser extends LabelParserBase {
 	protected sourceMemoryModel(): SjasmplusMemoryModel {
 		if (this.slots.length === 1 && this.bankSize === 0x10000 && this.bankCount === 32)
 			return SjasmplusMemoryModel.NOSLOT64K;
-		if (this.slots.length === 4 && this.bankSize === 0x4000 && this.bankCount === 4)
-			return SjasmplusMemoryModel.ZX48K;
-		if (this.slots.length === 4 && this.bankSize === 0x4000 && this.bankCount === 8)
-			return SjasmplusMemoryModel.ZX128K;
-		if (this.slots.length === 8 && this.bankSize === 0x2000 && this.bankCount >= 100)
-			return SjasmplusMemoryModel.ZXNEXT;
 		return SjasmplusMemoryModel.NONE;
 	}
 
 
 	/** Checks conversion to target memory model.
-	 * ZXNEXT: pages.size:8192,pages.count:224,slots.count:8,slots.adr:0,8192,16384,24576,32768,40960,49152,57344
-	 * ZX128K: pages.size:16384,pages.count:8,slots.count:4,slots.adr:0,16384,32768,49152
-	 * ZX48K:  pages.size:16384,pages.count:4,slots.count:4,slots.adr:0,16384,32768,49152
-	 * ZX16K:  -
 	 * NOSLOT64K: pages.size:65536,pages.count:32,slots.count:1,slots.adr:0
 	 */
 	protected checkMappingToTargetMemoryModel() {
@@ -450,61 +431,10 @@ export class SjasmplusSldLabelParser extends LabelParserBase {
 		// Also for simple destinations like MemoryModelUnknown and
 		// MemoryModelAllRam, all that only have banks within the 64k.
 		const destMemModel = this.memoryModel;
-		if (srcMemModel === SjasmplusMemoryModel.NOSLOT64K
-			|| srcMemModel === SjasmplusMemoryModel.ZX48K
-			|| destMemModel instanceof MemoryModelUnknown
-			|| destMemModel instanceof MemoryModelAllRam
-			|| destMemModel instanceof MemoryModelZx16k
-			|| destMemModel instanceof MemoryModelZx48k
-			|| destMemModel instanceof MemoryModelColecoVision) {
+		if (srcMemModel === SjasmplusMemoryModel.NOSLOT64K) {
 			// Use generic conversion
 			super.checkMappingToTargetMemoryModel();
 			return;
-		}
-
-
-		// Check for sjasmplus ZX128K
-		if (srcMemModel === SjasmplusMemoryModel.ZX128K) {
-			// sjasmplus was compiled for ZX128K
-			if (destMemModel instanceof MemoryModelZxNextBase) {
-				this.funcConvertBank = (address: number, bank: number) => {
-					if (bank > 7)
-						this.throwError("Bank " + bank + " of ZX128K memory model cannot be converted to target ZXNext memory model.");
-					let convBank = 2 * bank;
-					convBank += (address >>> 13) & 0x01;
-					return convBank;
-				};
-				return;
-			}
-			if (destMemModel instanceof MemoryModelZx128k) {
-				this.funcConvertBank = (address: number, bank: number) => {
-					return bank;	// No conversion
-				};
-				return;
-			}
-		}
-
-		// Check for sjasmplus ZXNEXT
-		if (srcMemModel === SjasmplusMemoryModel.ZXNEXT) {
-			// sjasmplus was compiled for ZXNEXT
-			if (destMemModel instanceof MemoryModelZxNextBase) {
-				this.funcConvertBank = (address: number, bank: number) => {
-					return bank;	// No conversion
-				};
-				return;
-			}
-			if (destMemModel instanceof MemoryModelZx128k) {
-				this.funcConvertBank = (address: number, bank: number) => {
-					let error = (bank > 15);
-					const convBank = bank >>> 1;
-					if ((bank & 0x01) != ((address >>> 13) & 0x01))
-						error = true;
-					if(error)
-						this.throwError("Bank " + bank + " of ZXNext memory model cannot be converted to target ZX128K memory model.");
-					return convBank;
-				};
-				return;
-			}
 		}
 
 		// Not a known memory model conversion

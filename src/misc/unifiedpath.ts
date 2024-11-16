@@ -23,6 +23,7 @@ export class UnifiedPath {
 	public static basename = redirectedPath.basename;
 	public static dirname = redirectedPath.dirname;
 	public static resolve = redirectedPath.resolve;
+	public static extname = redirectedPath.extname;
 
 	/**
 	 * Needs to check posix and windows.
@@ -83,6 +84,11 @@ export class UnifiedPath {
 		const uPath = fpaths.map(fpath =>
 			((fpath != undefined) ? fpath.replace(/\\/g, '/') : undefined) as string);
 		return uPath;
+	}
+
+	public static changeExtension(path: string, extension: string) {
+		const basename = UnifiedPath.basename(path, UnifiedPath.extname(path))
+		return UnifiedPath.join(UnifiedPath.dirname(path), basename + extension)
 	}
 
 }

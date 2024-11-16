@@ -5,23 +5,6 @@ This document outlines the functionalities of DeZog and provides instructions on
 
 If watched inside vscode you can use "CTRL-F" to search for certain topics.
 
-
-## Support
-
-If you like DeZog please consider supporting it.
-
-<a href="https://github.com/sponsors/maziac" title="Github sponsor">
-	<img src="../assets/button_donate_sp.png" />
-</a>
-&nbsp;&nbsp;
-<a href="https://www.paypal.com/donate/?hosted_button_id=K6NNLZCTN3UV4&locale.x=en_DE&Z3JncnB0=" title="PayPal">
-	<img src="../assets/button_donate_pp.png" />
-</a>
-
-
-If you would like to contribute, e.g. by adding a new assembler or adding other remotes/emulators, see "Contribution" [here](https://github.com/maziac/DeZog/blob/master/README.md#contribution).
-
-
 ## References
 
 <!-- When reference, upper or lower case can be used -->

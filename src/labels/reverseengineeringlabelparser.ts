@@ -1,7 +1,7 @@
 import {Utility} from '../misc/utility';
 import {MemoryModel} from '../remotes/MemoryModel/memorymodel';
 import {MemoryModelAllRam, MemoryModelUnknown} from '../remotes/MemoryModel/genericmemorymodels';
-import {MemoryModelZx48k} from '../remotes/MemoryModel/zxspectrummemorymodels';
+import { MemoryModelZX81_16k, MemoryModelZX81_1k, MemoryModelZX81_2k, MemoryModelZX81_32k, MemoryModelZX81_48k, MemoryModelZX81_56k } from '../remotes/MemoryModel/zx81memorymodels';
 import {Z80RegistersClass} from '../remotes/z80registers';
 import {ListConfigBase} from '../settings/settings';
 import {Issue, LabelParserBase} from './labelparserbase';
@@ -352,17 +352,23 @@ export class ReverseEngineeringLabelParser extends LabelParserBase {
 			return;
 		}
 
-		// Check for ZX48K
-		if (this.memoryModel instanceof MemoryModelZx48k) {
+		// Check for ZX81
+		if (this.memoryModel instanceof MemoryModelZX81_1k || 
+			this.memoryModel instanceof MemoryModelZX81_2k ||
+			this.memoryModel instanceof MemoryModelZX81_16k ||
+			this.memoryModel instanceof MemoryModelZX81_32k ||
+			this.memoryModel instanceof MemoryModelZX81_48k ||
+			this.memoryModel instanceof MemoryModelZX81_56k
+		) {
 			this.funcConvertBank = (address: number, bank: number) => {
-				if (address < 0x4000)
+				if (address < 0x2000)
 					return 0; // ROM
 				return 1;	// RAM
 			};
 			return;
 		}
 
-		// All others, e.g. ZX128K, ZXNext, Custom
+		// All others, e.g. Custom
 		this.funcConvertBank = (address: number, bank: number) => {
 			// Check bank
 			if (this.memoryModel.banks[bank] === undefined)

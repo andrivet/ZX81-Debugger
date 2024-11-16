@@ -1,14 +1,9 @@
 
 import * as assert from 'assert';
 import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import {LabelsClass, SourceFileEntry} from '../src/labels/labels';
-import {Z88dkLabelParserV2} from '../src/labels/z88dklabelparserv2';
-import {MemoryModel} from '../src/remotes/MemoryModel/memorymodel';
+import {LabelsClass} from '../src/labels/labels';
 import {MemoryModelAllRam} from '../src/remotes/MemoryModel/genericmemorymodels';
-import {MemoryModelZx48k} from '../src/remotes/MemoryModel/zxspectrummemorymodels';
-import {MemoryModelZxNextOneROM, MemoryModelZxNextTwoRom} from '../src/remotes/MemoryModel/zxnextmemorymodels';
+import {MemoryModelZX81_48k} from '../src/remotes/MemoryModel/zx81memorymodels';
 
 suite('Labels (z88dk v2 format)', () => {
 	let lbls;
@@ -212,7 +207,7 @@ suite('Labels (z88dk v2 format)', () => {
 						mapFile: "./tests/data/labels/projects/z88dk/test_c_v2/Test.map"
 					}]
 				};
-				lbls.readListFiles(config, new MemoryModelZx48k());
+				lbls.readListFiles(config, new MemoryModelZX81_48k());
 
 				let res = lbls.getFileAndLineForAddress(0x028FB7);
 				assert.ok(res.fileName.endsWith('Test.c.lis'));
@@ -386,99 +381,5 @@ suite('Labels (z88dk v2 format)', () => {
 		assert.equal(lpLines[0].line, "LOGPOINT");
 	});
 
-
-	suite('checkMappingToTargetMemoryModel', () => {
-		// z88dk v2 uses the base LabelParserBase checkMappingToTargetMemoryModel function.
-		// So strictly speaking this test would not be necessary.
-		let tmpFile;
-		let tmpMapFile;
-		let parser: any;
-
-		setup(() => {
-			// File path for a temporary file.
-			tmpFile = path.join(os.tmpdir(), 'dezog_labels_z88dk.lis');
-			// Write file.
-			fs.writeFileSync(tmpFile,
-			`
-    15                  label0000:
-    16                  label2000:
-    17                  label4000:
-    18                  label6000:
-    19                  label8000:
-    20                  labelA000:
-    21                  labelC000:
- 99999                  labelE000:
-`);
-			//Write also map file.
-			tmpMapFile = path.join(os.tmpdir(), 'dezog_labels_z88dk.map');
-			fs.writeFileSync(tmpMapFile,
-`label0000                          = $0000 ; addr, local, , main, , main.asm:15
-label2000                          = $2000 ; addr, local, , main, , main.asm:16
-label4000                          = $4000 ; addr, local, , main, , main.asm:17
-label6000                          = $6000 ; addr, local, , main, , main.asm:18
-label8000                          = $8000 ; addr, local, , main, , main.asm:19
-labelA000                          = $A000 ; addr, local, , main, , main.asm:20
-labelC000                          = $C000 ; addr, local, , main, , main.asm:21
-labelE000                          = $E000 ; addr, local, , main, , main.asm:22
-`);
-		});
-
-		function createParser(mm: MemoryModel) {
-			// Read the empty list file
-			const config: any = {
-				path: tmpFile,
-				mapFile: tmpMapFile,
-				srcDirs: [],
-				excludeFiles: []
-			};
-			parser = new Z88dkLabelParserV2 (
-				mm,
-				new Map<number, SourceFileEntry>(),
-				new Map<string, Array<number>>(),
-				new Array<any>(),
-				new Map<number, Array<string>>(),
-				new Map<string, number>(),
-				new Map<string, {file: string, lineNr: number, address: number}>(),
-				new Array<{address: number, line: string}>(),
-				new Array<{address: number, line: string}>(),
-				new Array<{address: number, line: string}>(),
-				(issue) => {});	// NOSONAR
-			parser.loadAsmListFile(config);
-		}
-
-		// Cleanup
-		teardown(() => {
-			fs.unlinkSync(tmpFile);
-		});
-
-
-		test('createLongAddress MemoryModelZxNextOneROM', () => {
-			const mm = new MemoryModelZxNextOneROM();
-			createParser(mm);
-
-			assert.equal(parser.numberForLabel.get('label0000'), 0x0FF0000);
-			assert.equal(parser.numberForLabel.get('label2000'), 0x1002000);
-			assert.equal(parser.numberForLabel.get('label4000'), 0x00B4000);
-			assert.equal(parser.numberForLabel.get('label6000'), 0x00C6000);
-			assert.equal(parser.numberForLabel.get('label8000'), 0x0058000);
-			assert.equal(parser.numberForLabel.get('labelA000'), 0x006A000);
-			assert.equal(parser.numberForLabel.get('labelC000'), 0x001C000);
-			assert.equal(parser.numberForLabel.get('labelE000'), 0x002E000);
-		});
-
-		test('createLongAddress MemoryModelZxNextTwoRom', () => {
-			const mm = new MemoryModelZxNextTwoRom();
-			createParser(mm);
-
-			assert.equal(parser.numberForLabel.get('label0000'), 0x0FF0000);
-			assert.equal(parser.numberForLabel.get('label2000'), 0x1002000);
-			assert.equal(parser.numberForLabel.get('label4000'), 0x00B4000);
-			assert.equal(parser.numberForLabel.get('label6000'), 0x00C6000);
-			assert.equal(parser.numberForLabel.get('label8000'), 0x0058000);
-			assert.equal(parser.numberForLabel.get('labelA000'), 0x006A000);
-			assert.equal(parser.numberForLabel.get('labelC000'), 0x001C000);
-			assert.equal(parser.numberForLabel.get('labelE000'), 0x002E000);
-		});
-	});
 });
 

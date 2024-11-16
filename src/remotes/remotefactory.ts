@@ -3,7 +3,6 @@ import {ZSimRemote} from './zsimulator/zsimremote';
 import {CSpectRemote} from './dzrpbuffer/cspectremote';
 import {Utility} from '../misc/utility';
 import {ZesaruxRemote} from './zesarux/zesaruxremote';
-import {ZxNextSerialRemote} from './dzrpbuffer/zxnextserialremote';
 import {MameGdbRemote} from './mame/mamegdbremote';
 import {Settings} from '../settings/settings';
 
@@ -15,7 +14,7 @@ import {Settings} from '../settings/settings';
 export class RemoteFactory {
 	/**
 	 * Factory method to create an emulator.
-	 * @param remoteType 'zrcp', 'cspect', 'zxnext' or 'zsim'.
+	 * @param remoteType 'zrcp', 'cspect' or 'zsim'.
 	 */
 	public static createRemote(remoteType: string) {
 		switch (remoteType) {
@@ -24,9 +23,6 @@ export class RemoteFactory {
 				break;
 			case 'cspect':	// CSpect socket
 				RemoteFactory.setGlobalRemote(new CSpectRemote());
-				break;
-			case 'zxnext':	// The ZX Next USB/serial connection
-				RemoteFactory.setGlobalRemote(new ZxNextSerialRemote());
 				break;
 			case 'zsim':	// Simulator
 				RemoteFactory.setGlobalRemote(new ZSimRemote(Settings.launch));

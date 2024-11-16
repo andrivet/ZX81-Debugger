@@ -8,6 +8,8 @@ import {MemoryDiffView} from "../views/memorydiffview";
 import {MemoryDumpView} from "../views/memorydumpview";
 import {MemoryDumpViewWord} from "../views/memorydumpviewword";
 import {MemoryRegisterView} from "../views/memoryregisterview";
+import { ZSimRemote } from '../remotes/zsimulator/zsimremote';
+import { ZSimulationView } from '../remotes/zsimulator/zsimulationview';
 
 
 /** A static class that contains the debug console commands to evaluate the memory.
@@ -469,6 +471,73 @@ export class MemoryCommands {
 		}
 		panel.mergeBlocks();
 		await panel.update();
+
+		// Send response
+		return 'OK';
+	}
+
+	/**
+	 * Shows a view with a memory dump with a precise number of columns.
+	 * @param tokens The arguments, i.e. the number of columns, then the addresses and sizes.
+	 * @returns A Promise with a text to print.
+	 */
+	public static async evalMemViewColumns(tokens: Array<string>): Promise<string> {
+		// Check count of arguments
+		if (tokens.length < 3) {
+			// Error Handling: No arguments
+			throw new Error("Columns, address and size expected.");
+		}
+
+		if ((tokens.length - 1) % 2 != 0) {
+			// Error Handling: No size given
+			throw new Error("No size given for address '" + tokens[tokens.length - 1] + "'.");
+		}
+
+		const columns = Utility.evalExpression(tokens[0]);
+
+		// Get all addresses/sizes.
+		const addrSizes = new Array<number>();
+		for (let k = 1; k < tokens.length; k += 2) {
+			// Address
+			const addressString = tokens[k];
+			const address = Utility.evalExpression(addressString);
+			addrSizes.push(address);
+
+			// Size
+			const sizeString = tokens[k + 1];
+			// Allow size of 0x10000
+			const size = Utility.parseValue(sizeString);
+			// Error Handling: size too big
+			if (size > 0x10000) {
+				throw new Error("Size too big: '" + sizeString + "'.");
+			}
+			addrSizes.push(size);
+		}
+
+		// Create new view
+		const panel = new MemoryDumpView();
+		panel.setColumns(columns);
+		for (let k = 0; k < addrSizes.length; k += 2) {
+			const start = addrSizes[k];
+			const size = addrSizes[k + 1]
+			panel.addBlock(start, size, Utility.getHexString(start & 0xFFFF, 4) + 'h-' + Utility.getHexString((start + size - 1) & 0xFFFF, 4) + 'h');
+		}
+		panel.mergeBlocks();
+		await panel.update();
+
+		// Send response
+		return 'OK';
+	}
+
+	/**
+	 * Shows a view for the ZX81.
+	 * @returns A Promise with a text to print.
+	 */
+	public static async evalDisplayView(): Promise<string> {
+		if(Remote instanceof ZSimRemote) {
+			const panel = new ZSimulationView(Remote as ZSimRemote);
+			await panel.update(true);
+		}
 
 		// Send response
 		return 'OK';

@@ -237,83 +237,8 @@ export class DecodeZesaruxRegisters extends DecodeRegisterData {
 	// Decode ZEsarUX MMU info:
 	// Bit 15 stands for ROM.
 	// I.e. $8000 and $8001 are ROM.
-	// ZXNext: "MMU=8002 8003 000a 000b 0004 0005 0000 0001", 	ROM0: 0x8000 or 0x8001,	ROM1: 0x8002 or 0x8003
-	// ZX128:  "MMU=8001 0005 0002 0000 0004 0005 0000 0001",	ROM0: 0x8000, ROM1: 0x8001
-	// ZX48K:  "MMU=8001 0005 0002 0000 0004 0005 0000 0001"
-	// ZX16K:  "MMU=8001 0005 0002 0000 0004 0005 0000 0001"
-	// Others are simply the bank number.
-	// coleco:  "MMU=80008001000a000b0004000500000001"
 	public parseSlots(data: string): number[] {
 		return [0];	// Correspondents to MemoryModelUnknown
-	}
-}
-
-
-// Decoder for the ZX128K.
-export class DecodeZesaruxRegistersZx128k extends DecodeZesaruxRegisters {
-	constructor() {
-		super(4);	// 4 slots
-	}
-
-	public parseSlots(data: string): number[] {
-		// Note: the mmuIndex has to be calculated every time because
-		// the position may vary for "normal" lines and "history" lines.
-		let mmuIndex = data.indexOf('MMU=');
-		Utility.assert(mmuIndex >= 0);
-		mmuIndex += 4;
-
-		let line = data.substring(mmuIndex);
-		const count = this.countSlots;
-		const slots = new Array<number>(count);
-		for (let i = 0; i < count; i++) {
-			const slotPart = line.substring(0, 4);
-			let value = parseInt(slotPart, 16);
-			// Decode ZEsarUX: Bit 15 stands for ROM.
-			// I.e. $8000 and $8001 are ROM.
-			// ZX128: 	ROM0: 0x8000, ROM1: 0x8001
-			// Others are simply the bank number.
-			if (value >= 0x8000)
-				value = 8 + (value & 0x0001);	// 8 = ROM0, 9 = ROM1
-			slots[i] = value;
-			// Next
-			line = line.substring(4);
-		}
-
-		return slots;
-	}
-}
-
-
-// Decoder for the ZxNext.
-export class DecodeZesaruxRegistersZxNext extends DecodeZesaruxRegisters {
-	constructor() {
-		super(8);	// 8 slots
-	}
-
-	public parseSlots(data: string): number[] {
-		// Note: the mmuIndex has to be calculated every time because
-		// the position may vary for "normal" lines and "history" lines.
-		let mmuIndex = data.indexOf('MMU=');
-		Utility.assert(mmuIndex >= 0);
-		mmuIndex += 4;
-
-		let line = data.substring(mmuIndex);
-		const count = this.countSlots;
-		const slots = new Array<number>(count);
-		for (let i = 0; i < count; i++) {
-			const slotPart = line.substring(0, 4);
-			let value = parseInt(slotPart, 16);
-			// Decode ZEsarUX: Bit 15 stands for ROM.
-			// ZXNext: 	ROM0: 0x8000 or 0x8001,	ROM1: 0x8002 or 0x8003
-			// Others are simply the bank number.
-			if (value >= 0x8000)
-				value = 0xFC + (value & 0x0003);
-			slots[i] = value;
-			// Next
-			line = line.substring(4);
-		}
-
-		return slots;
 	}
 }
 
@@ -350,18 +275,5 @@ export class DecodeZesaruxRegistersZx16k extends DecodeZesaruxRegisters {
 		// ZX16K:  "MMU=8001 0005 0002 0000 0004 0005 0000 0001"
 		// But because it is fixed, it can be ignored.
 		return [0, 1, 2];
-	}
-}
-
-
-// Decoder for the Coleco Vision.
-export class DecodeZesaruxRegistersColecovision extends DecodeZesaruxRegisters {
-	constructor() {
-		super(6);	// 6 slots: BIOS, EXP. PORT, Unassigned, RAM, Unassigned, Cartridge
-	}
-
-	public parseSlots(data: string): number[] {
-		// The slots are fixed so we don't need to parse.
-		return [0, 1, 4, 2, 5, 3];
 	}
 }

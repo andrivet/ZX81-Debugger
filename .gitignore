@@ -11,3 +11,4 @@ notes.md
 **/.tmp/
 comments.json
 *.cpuprofile
+.DS_Store

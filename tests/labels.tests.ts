@@ -2,8 +2,6 @@ import * as assert from 'assert';
 import {LabelsClass, SourceFileEntry} from '../src/labels/labels';
 import {MemoryModelAllRam, MemoryModelUnknown} from '../src/remotes/MemoryModel/genericmemorymodels';
 import {MemoryModelZX81_1k, MemoryModelZX81_2k, MemoryModelZX81_16k, MemoryModelZX81_32k, MemoryModelZX81_48k, MemoryModelZX81_56k} from '../src/remotes/MemoryModel/zx81memorymodels';
-import {MemoryModelZx128k, MemoryModelZx16k, MemoryModelZx48k} from '../src/remotes/MemoryModel/zxspectrummemorymodels';
-import {MemoryModelZxNextOneROM, MemoryModelZxNextTwoRom} from '../src/remotes/MemoryModel/zxnextmemorymodels';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -588,7 +586,7 @@ suite('Labels', () => {
 
 
 		test('Target: MemoryModelZx16k', () => {
-			const mm = new MemoryModelZx16k();
+			const mm = new MemoryModelZX81_16k();
 			createParser(mm);
 
 			assert.equal(parser.createLongAddress(0x0000, 0), 0x10000);
@@ -603,7 +601,7 @@ suite('Labels', () => {
 		});
 
 		test('Target: MemoryModelZx48k', () => {
-			const mm = new MemoryModelZx48k();
+			const mm = new MemoryModelZX81_48k();
 			createParser(mm);
 
 			assert.equal(parser.createLongAddress(0x0000, 0), 0x10000);
@@ -616,55 +614,6 @@ suite('Labels', () => {
 			assert.equal(parser.createLongAddress(0xE000, 0), 0x2E000);
 		});
 
-		test('Target: MemoryModelZx128k', () => {
-			const mm = new MemoryModelZx128k();
-			createParser(mm);
-
-			// 0x90000 correspondents to ROM 0 (the 128k ROM) in bank 8.
-			// 0xA0000 for ROM 1 (48k Spectrum ROM) in bank 9 would be a better choice for a 64k model,
-			// anyhow bank 8 is the initial bank.
-			assert.equal(parser.createLongAddress(0x0000, 0), 0x90000);
-			assert.equal(parser.createLongAddress(0x2000, 0), 0x92000);
-			assert.equal(parser.createLongAddress(0x4000, 0), 0x64000);
-			assert.equal(parser.createLongAddress(0x6000, 0), 0x66000);
-			assert.equal(parser.createLongAddress(0x8000, 0), 0x38000);
-			assert.equal(parser.createLongAddress(0xA000, 0), 0x3A000);
-			assert.equal(parser.createLongAddress(0xC000, 0), 0x1C000);
-			assert.equal(parser.createLongAddress(0xE000, 0), 0x1E000);
-		});
-
-		test('Target: MemoryModelZxNextOneROM', () => {
-			const mm = new MemoryModelZxNextOneROM();
-			createParser(mm);
-
-			assert.equal(parser.createLongAddress(0x0000, 0), 0x0FF0000);
-			assert.equal(parser.createLongAddress(0x2000, 0), 0x1002000);
-			assert.equal(parser.createLongAddress(0x4000, 0), 0x00B4000);
-			assert.equal(parser.createLongAddress(0x6000, 0), 0x00C6000);
-			assert.equal(parser.createLongAddress(0x8000, 0), 0x0058000);
-			assert.equal(parser.createLongAddress(0xA000, 0), 0x006A000);
-			assert.equal(parser.createLongAddress(0xC000, 0), 0x001C000);
-			assert.equal(parser.createLongAddress(0xE000, 0), 0x002E000);
-		});
-
-		test('Target: MemoryModelZxNextTwoRom', () => {
-			const mm = new MemoryModelZxNextTwoRom();
-			createParser(mm);
-
-			// Note: these are the same tests as for MemoryModelZxNextOneROM.
-			// Because 'checkMappingToTargetMemoryModel' is used which converts
-			// from a non-banking scheme to another.
-			// I.e. the possibly ROM paging is ignored.
-
-			assert.equal(parser.createLongAddress(0x0000, 0), 0x0FF0000);
-			assert.equal(parser.createLongAddress(0x2000, 0), 0x1002000);
-			assert.equal(parser.createLongAddress(0x4000, 0), 0x00B4000);
-			assert.equal(parser.createLongAddress(0x6000, 0), 0x00C6000);
-			assert.equal(parser.createLongAddress(0x8000, 0), 0x0058000);
-			assert.equal(parser.createLongAddress(0xA000, 0), 0x006A000);
-			assert.equal(parser.createLongAddress(0xC000, 0), 0x001C000);
-			assert.equal(parser.createLongAddress(0xE000, 0), 0x002E000);
-		});
 	});
 
 });

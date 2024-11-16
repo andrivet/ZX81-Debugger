@@ -13,7 +13,6 @@ import {Utility} from './misc/utility';
 import {PackageInfo} from './whatsnew/packageinfo';
 import {WhatsNewView} from './whatsnew/whatsnewview';
 import {Z80UnitTestRunner} from './z80unittests/z80unittestrunner';
-import {ZxNextSerialLoopback} from './remotes/dzrpbuffer/zxnextserialloopback';
 import {Run} from './run';
 
 
@@ -50,20 +49,20 @@ export function activate(context: vscode.ExtensionContext) {
 		new WhatsNewView();	// NOSONAR
 	}
 	// Register the additional command to view the "Whats' New" page.
-	context.subscriptions.push(vscode.commands.registerCommand("dezog.whatsNew", () => new WhatsNewView()));
+	context.subscriptions.push(vscode.commands.registerCommand("zx81debugger.whatsNew", () => new WhatsNewView()));
 
 
-	// Register the 'DeZog Help' webview
+	// Register the 'Help' webview
 	const helpProvider = new HelpProvider();
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider("dezog.helpview", helpProvider, {webviewOptions: {retainContextWhenHidden: false}})
+		vscode.window.registerWebviewViewProvider("zx81debugger.helpview", helpProvider, {webviewOptions: {retainContextWhenHidden: false}})
 	);
 
 	// Command to show the DeZog Help
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.help', () => helpProvider.createHelpView()));
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.help', () => helpProvider.createHelpView()));
 
 	// Command to show the available serial ports
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.serialport.list', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.serialport.list', async () => {
 		const list = await SerialPort.list();	// PortInfo[]
 		if (list.length > 0) {
 			const items = list.map(item => item.path);
@@ -79,7 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 	// Command to test communication on a serial port
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.serialport.test', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.serialport.test', async () => {
 		// Test first if in debug mode (= not allowed)
 		const session = DebugSessionClass.singleton();
 		if (session.running) {
@@ -107,24 +106,13 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!selectedPortPath)
 			return;
 		//console.log('Selected option:', selectedPortPath);
-
-		// Start loopback test
-		const zxnextLoopback = new ZxNextSerialLoopback();
-		zxnextLoopback.on('info', async msg => {
-			await vscode.window.showInformationMessage(msg);
-		});
-		zxnextLoopback.on('error', async msg => {
-			await vscode.window.showErrorMessage(msg);
-		});
-		await zxnextLoopback.runLoopbackTest(selectedPortPath.value, 1000, 10);
-		// zxnextLoopback will close itself when the loopback test is finished.
 	}));
 
-	// Command to directly run a .sna or .p file. Bypassing the debugger.
+	// Command to directly run a .p file. Bypassing the debugger.
 	// If command is executed from a right click in the explorer parameter 1 and 2, both contain the file path.
 	// The 2nd parameter embedded in an array.
 	// Therefore, parameter 2 is ignored.
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.run', async (fileUri: vscode.Uri, _p2, zsim: {} = undefined as any) => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.run', async (fileUri: vscode.Uri, _p2, zsim: {} = undefined as any) => {
 		//vscode.window.showInformationMessage(`fileUri: ${fileUri}, Parameter 2: ${_p2}, zsim: ${zsim}`);
 		//console.log(`fileUri: ${fileUri}, Parameter 2: ${_p2}, zsim: ${zsim}`);
 		Run.execute(fileUri, zsim);
@@ -146,11 +134,6 @@ export function activate(context: vscode.ExtensionContext) {
 			const currentConfig = PackageInfo.getConfiguration();
 			configureLogging(currentConfig);
 		}
-		// 'donated' changed
-		if (event.affectsConfiguration(extensionBaseName + '.donated')) {
-			// Reload complete html
-			helpProvider.setMainHtml();
-		}
 	}));
 
 	// Note: Weinand: "VS Code runs extensions on the node version that is built into electron (on which VS Code is based). This cannot be changed."
@@ -163,7 +146,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
 	// Command to change the program counter via menu.
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.movePCtoCursor', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.movePCtoCursor', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (!session.running)
@@ -179,7 +162,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	// Command to do a disassembly at the cursor's position.
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.disassemblyAtCursor.code', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.disassemblyAtCursor.code', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (session.running) {
@@ -188,7 +171,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await session.disassemblyAtCursor('code', block.filename, block.fromLine, block.toLine);
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.disassemblyAtCursor.data', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.disassemblyAtCursor.data', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (session.running) {
@@ -197,7 +180,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await session.disassemblyAtCursor('data', block.filename, block.fromLine, block.toLine);
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.disassemblyAtCursor.string', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.disassemblyAtCursor.string', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (session.running) {
@@ -206,7 +189,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await session.disassemblyAtCursor('string', block.filename, block.fromLine, block.toLine);
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.analyzeAtCursor.disassembly', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.analyzeAtCursor.disassembly', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (session.running) {
@@ -214,7 +197,7 @@ export function activate(context: vscode.ExtensionContext) {
 			await session.analyzeAtCursor('disassembly', arr);
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.analyzeAtCursor.flowChart', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.analyzeAtCursor.flowChart', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (session.running) {
@@ -222,7 +205,7 @@ export function activate(context: vscode.ExtensionContext) {
 			await session.analyzeAtCursor('flowChart', arr);
 		}
 	}));
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.analyzeAtCursor.callGraph', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.analyzeAtCursor.callGraph', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (session.running) {
@@ -232,13 +215,13 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	// Command to disable code coverage display and analyzes.
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.clearAllDecorations', () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.clearAllDecorations', () => {
 		Decoration?.clearAllDecorations();
 	}));
 
 
 	// Command to reload the list file(s).
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.reload', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.reload', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (!session.running)
@@ -248,7 +231,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 
 	// Command to refresh (button) the disassembly.
-	context.subscriptions.push(vscode.commands.registerCommand('dezog.disassembly.refresh', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.disassembly.refresh', async () => {
 		// Only allowed in debug context
 		const session = DebugSessionClass.singleton();
 		if (!session.running)
@@ -259,7 +242,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Register a configuration provider for 'dezog' debug type
 	const configProvider = new DeZogConfigurationProvider();
-	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('dezog', configProvider));
+	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('zx81debugger', configProvider));
 
 	// Registers the debug inline value provider
 	const asmDocSelector: vscode.DocumentSelector = {scheme: 'file'};
@@ -401,7 +384,7 @@ class DeZogConfigurationProvider implements vscode.DebugConfigurationProvider {
 					// a) if a restart is done and at the same time the launch.json was also changed.
 					// b) a different launch.json should be started.
 					// Show warning and return.
-					const result = await vscode.window.showWarningMessage('DeZog is already active.', 'Terminate current session', 'Cancel');
+					const result = await vscode.window.showWarningMessage('ZX81 Debugger is already active.', 'Terminate current session', 'Cancel');
 					// Check user selection
 					if (result?.toLowerCase().startsWith('terminate')) {
 						// Terminate current session and start a new one
@@ -453,7 +436,7 @@ function configureLogging(configuration: vscode.WorkspaceConfiguration) {
 		const logToPanel = configuration.get<boolean>('log.global');
 		if (LogGlobal.isEnabled() !== logToPanel) {
 			// State has changed
-			const channelOut = logToPanel ? vscode.window.createOutputChannel("DeZog") : undefined;
+			const channelOut = logToPanel ? vscode.window.createOutputChannel("ZX81 Debugger") : undefined;
 			// Enable or dispose
 			LogGlobal.init(channelOut);
 		}
@@ -464,7 +447,7 @@ function configureLogging(configuration: vscode.WorkspaceConfiguration) {
 		const logToPanel = configuration.get<boolean>('log.zsim.hardware');
 		if (LogZsimHardware.isEnabled() !== logToPanel) {
 			// State has changed
-			const channelOut = logToPanel ? vscode.window.createOutputChannel("DeZog zsim: Hardware") : undefined;
+			const channelOut = logToPanel ? vscode.window.createOutputChannel("ZX81 Debugger zsim: Hardware") : undefined;
 			// Enable or dispose
 			LogZsimHardware.init(channelOut);
 		}
@@ -475,7 +458,7 @@ function configureLogging(configuration: vscode.WorkspaceConfiguration) {
 		const logToPanel = configuration.get<boolean>('log.zsim.customCode');
 		if (LogZsimCustomCode.isEnabled() !== logToPanel) {
 			// State has changed
-			const channelOut = logToPanel ? vscode.window.createOutputChannel("DeZog zsim: Custom Code") : undefined;
+			const channelOut = logToPanel ? vscode.window.createOutputChannel("ZX81 Debugger zsim: Custom Code") : undefined;
 			// Enable or dispose
 			LogZsimCustomCode.init(channelOut);
 		}
@@ -486,7 +469,7 @@ function configureLogging(configuration: vscode.WorkspaceConfiguration) {
 		const logToPanel = configuration.get<boolean>('log.transport');
 		if (LogTransport.isEnabled() !== logToPanel) {
 			// State has changed
-			const channelOut = logToPanel ? vscode.window.createOutputChannel("DeZog Transport") : undefined;
+			const channelOut = logToPanel ? vscode.window.createOutputChannel("ZX81 Debugger Transport") : undefined;
 			// Enable or dispose
 			LogTransport.init(channelOut);
 		}

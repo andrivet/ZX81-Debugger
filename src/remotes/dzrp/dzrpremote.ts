@@ -2,26 +2,21 @@ import * as fs from 'fs';
 import {RemoteBase, RemoteBreakpoint, BREAK_REASON_NUMBER} from '../remotebase';
 import {GenericWatchpoint, GenericBreakpoint} from '../../genericwatchpoint';
 import {Z80RegistersClass, Z80_REG, Z80Registers} from '../z80registers';
-import {MemBank16k} from './membank16k';
-import {SnaFile} from './snafile';
-import {NexFile} from './nexfile';
 import {Settings} from '../../settings/settings';
 import {Utility} from '../../misc/utility';
 import * as path from 'path';
 import {Labels} from '../../labels/labels';
 import {gzip, ungzip} from 'node-gzip';
 import {TimeWait} from '../../misc/timewait';
-import {Log} from '../../log';
 import {Z80RegistersStandardDecoder} from '../z80registersstandarddecoder';
 import {PromiseCallbacks} from '../../misc/promisecallbacks';
-import {MemoryModelZx128k, MemoryModelZx16k, MemoryModelZx48k} from '../MemoryModel/zxspectrummemorymodels';
-import {MemoryModelZxNextOneROM} from '../MemoryModel/zxnextmemorymodels';
 import {DzrpTransportTest} from './dzrptransporttest';
+import { MemoryModelZX81_16k, MemoryModelZX81_1k, MemoryModelZX81_2k, MemoryModelZX81_32k, MemoryModelZX81_48k, MemoryModelZX81_56k } from '../MemoryModel/zx81memorymodels';
 
 
 
 // The program name and version transmitted during CMD_INIT.
-export const DZRP_PROGRAM_NAME = "DeZog v" + process.version;
+export const DZRP_PROGRAM_NAME = "ZX81 Debugger v" + process.version;
 
 
 /** The DRZP commands and responses.
@@ -93,10 +88,12 @@ export enum AlternateCommand {
  * It is required to determine the memory model.
  */
 export enum DzrpMachineType {
-	ZX16K = 1,
-	ZX48K = 2,
-	ZX128K = 3,
-	ZXNEXT = 4,
+	ZX81_1K = 1,
+	ZX81_2K = 2,
+	ZX81_16K = 3,
+	ZX81_32K = 4,
+	ZX81_48K = 5,
+	ZX81_56K = 6
 }
 
 /** This interface is passed after a break occurs and contains
@@ -238,21 +235,23 @@ export class DzrpRemote extends RemoteBase {
 			Z80Registers.decoder = this.createZ80RegistersDecoder();
 			// Set memory model according machine type
 			switch (resp.machineType) {
-				case DzrpMachineType.ZX16K:
-					// ZX Spectrum 16K
-					this.memoryModel = new MemoryModelZx16k();
+				case DzrpMachineType.ZX81_1K:
+					this.memoryModel = new MemoryModelZX81_1k();
 					break;
-				case DzrpMachineType.ZX48K:
-					// ZX Spectrum 48K
-					this.memoryModel = new MemoryModelZx48k();
+				case DzrpMachineType.ZX81_2K:
+					this.memoryModel = new MemoryModelZX81_2k();
 					break;
-				case DzrpMachineType.ZX128K:
-					// ZX Spectrum 128K
-					this.memoryModel = new MemoryModelZx128k();
+				case DzrpMachineType.ZX81_16K:
+					this.memoryModel = new MemoryModelZX81_16k();
 					break;
-				case DzrpMachineType.ZXNEXT:
-					// ZxNext: 8x8k banks
-					this.memoryModel = new MemoryModelZxNextOneROM();
+				case DzrpMachineType.ZX81_32K:
+					this.memoryModel = new MemoryModelZX81_32k();
+					break;
+				case DzrpMachineType.ZX81_48K:
+					this.memoryModel = new MemoryModelZX81_48k();
+					break;
+				case DzrpMachineType.ZX81_56K:
+					this.memoryModel = new MemoryModelZX81_56k();
 					break;
 				default:
 					// Error: Unknown type
@@ -290,14 +289,6 @@ export class DzrpRemote extends RemoteBase {
 		//Log.log('clearRegisters ->', Z80Registers.getCache() || "undefined");
 		// Get regs
 		const regs = await this.sendDzrpCmdGetRegisters();
-		// Adjust ROM bank. Change 0xFF in slot 0 to 0xFE.
-		if (this.memoryModel instanceof MemoryModelZxNextOneROM) {
-			// Only for CSpect and ZXNext
-			const k = Z80_REG.IM + 2;
-			if (regs[k] === 0xFF) {
-				regs[k]--;	// Change slot 0 to 0xFE
-			}
-		}
 		// And set
 		Z80Registers.setCache(regs);
 		//Log.log('clearRegisters <-', Z80Registers.getCache() || "undefined");
@@ -401,15 +392,6 @@ export class DzrpRemote extends RemoteBase {
 			const slot = Utility.parseValue(cmdArray[0]);
 			const bank = Utility.parseValue(cmdArray[1]);
 			await this.sendDzrpCmdSetSlot(slot, bank);
-		}
-		else if (cmd_name === "cmd_get_tbblue_reg") {
-			if (cmdArray.length < 1) {
-				// Error
-				throw Error("Expecting 1 parameter: register.");
-			}
-			const reg = Utility.parseValue(cmdArray[0]);
-			const value = await this.sendDzrpCmdGetTbblueReg(reg);
-			response += "\nReg[" + Utility.getHexString(reg, 2) + "h/" + reg + "]: " + Utility.getHexString(value, 2) + "h/" + value;
 		}
 		else if (cmd_name === "cmd_get_sprites_palette") {
 			if (cmdArray.length < 1) {
@@ -1411,17 +1393,13 @@ hl: 0x${Utility.getHexString(resp.hl, 4)}`;
 	}
 
 
-	/** Loads .nex, .sna or .p files.
+	/** Loads .p files.
 	 */
 	public async loadBin(filePath: string): Promise<void> {
 		try {
 			// Check file extension
 			const ext = path.extname(filePath).toLowerCase();
-			if (ext === '.sna')
-				await this.loadBinSna(filePath);
-			else if (ext === '.nex')
-				await this.loadBinNex(filePath);
-			else if (ext === '.p' || ext === '.81' || ext === '.p81')
+			if (ext === '.p' || ext === '.81' || ext === '.p81')
 				await this.loadBinZx81(filePath);
 			else {
 				// Error: unsupported file
@@ -1558,90 +1536,6 @@ hl: 0x${Utility.getHexString(resp.hl, 4)}`;
 	}
 
 
-	/** Loads a .sna file.
-	 * See https://faqwiki.zxnet.co.uk/wiki/SNA_format
-	 */
-	protected async loadBinSna(filePath: string): Promise<void> {
-		// Load and parse file
-		const snaFile = new SnaFile();
-		snaFile.readFile(filePath);
-
-		// Set the border
-		await this.sendDzrpCmdSetBorder(snaFile.borderColor);
-
-		// Transfer 16k memory banks
-		for (const memBank of snaFile.memBanks) {
-			// As 2x 8k memory banks. I.e. DZRP is for ZX Next only.
-			const bank8 = 2 * memBank.bank;
-			await this.sendDzrpCmdWriteBank(bank8, memBank.data.slice(0, MemBank16k.BANK16K_SIZE / 2));
-			await this.sendDzrpCmdWriteBank(bank8 + 1, memBank.data.slice(MemBank16k.BANK16K_SIZE / 2));
-		}
-
-		// Set the default slot/bank association
-		const slotBanks = [254, 255, 10, 11, 4, 5, 0, 1];	// 5, 2, 0
-		for (let slot = 0; slot < 8; slot++) {
-			const bank8 = slotBanks[slot];
-			await this.sendDzrpCmdSetSlot(slot, bank8);
-		}
-
-		// Set the registers
-		await this.sendDzrpCmdSetRegister(Z80_REG.PC, snaFile.pc);
-		await this.sendDzrpCmdSetRegister(Z80_REG.SP, snaFile.sp);
-		await this.sendDzrpCmdSetRegister(Z80_REG.AF, snaFile.af);
-		await this.sendDzrpCmdSetRegister(Z80_REG.BC, snaFile.bc);
-		await this.sendDzrpCmdSetRegister(Z80_REG.DE, snaFile.de);
-		await this.sendDzrpCmdSetRegister(Z80_REG.HL, snaFile.hl);
-		await this.sendDzrpCmdSetRegister(Z80_REG.IX, snaFile.ix);
-		await this.sendDzrpCmdSetRegister(Z80_REG.IY, snaFile.iy);
-		await this.sendDzrpCmdSetRegister(Z80_REG.AF2, snaFile.af2);
-		await this.sendDzrpCmdSetRegister(Z80_REG.BC2, snaFile.bc2);
-		await this.sendDzrpCmdSetRegister(Z80_REG.DE2, snaFile.de2);
-		await this.sendDzrpCmdSetRegister(Z80_REG.HL2, snaFile.hl2);
-		await this.sendDzrpCmdSetRegister(Z80_REG.R, snaFile.r);
-		await this.sendDzrpCmdSetRegister(Z80_REG.I, snaFile.i);
-		await this.sendDzrpCmdSetRegister(Z80_REG.IM, snaFile.im);
-
-		// Check if interrupt should be enabled
-		const interrupt_enabled = (snaFile.iff2 & 0b00000100) !== 0;
-		await this.sendDzrpCmdInterruptOnOff(interrupt_enabled);
-	}
-
-
-	/** Loads a .nex file.
-	 * See https://wiki.specnext.dev/NEX_file_format
-	 */
-	protected async loadBinNex(filePath: string): Promise<void> {
-		// Load and parse file
-		const nexFile = new NexFile();
-		nexFile.readFile(filePath);
-
-		// Set the border
-		await this.sendDzrpCmdSetBorder(nexFile.borderColor);
-
-		// Transfer 16k memory banks
-		for (const memBank of nexFile.memBanks) {
-			Log.log("loadBinNex: Writing 16k bank " + memBank.bank);
-			// As 2x 8k memory banks
-			const bank8 = 2 * memBank.bank;
-			await this.sendDzrpCmdWriteBank(bank8, memBank.data.slice(0, MemBank16k.BANK16K_SIZE / 2));
-			await this.sendDzrpCmdWriteBank(bank8 + 1, memBank.data.slice(MemBank16k.BANK16K_SIZE / 2));
-		}
-
-		// Set the default slot/bank association.
-		// Note: slot 0 and 1 is set to ROM. It is not set which ROM, 0 or 1.
-		const  entryBank8 = 2 * nexFile.entryBank;	// Convert 16k bank into 8k
-		const slotBanks = [255, 255, 10, 11, 4, 5, entryBank8, entryBank8+1];	// ROM, 5, 2, custom
-		for (let slot = 0; slot < 8; slot++) {
-			const bank8 = slotBanks[slot];
-			await this.sendDzrpCmdSetSlot(slot, bank8);
-		}
-
-		// Set the SP and PC registers
-		await this.sendDzrpCmdSetRegister(Z80_REG.SP, nexFile.sp);
-		await this.sendDzrpCmdSetRegister(Z80_REG.PC, nexFile.pc);
-	}
-
-
 	/** Called from "-state save" command.
 	 * Stores all RAM, registers etc.
 	 * Override.
@@ -1743,7 +1637,7 @@ hl: 0x${Utility.getHexString(resp.hl, 4)}`;
 	 */
 	protected async sendDzrpCmdInit(): Promise<{error: string | undefined, programName: string, dzrpVersion: string, machineType: DzrpMachineType}> {
 		Utility.assert(false);
-		return {error: undefined, dzrpVersion: "", programName: "", machineType: DzrpMachineType.ZX48K};
+		return {error: undefined, dzrpVersion: "", programName: "", machineType: DzrpMachineType.ZX81_16K};
 	}
 
 
@@ -1963,8 +1857,6 @@ hl: 0x${Utility.getHexString(resp.hl, 4)}`;
 
 
 	/** Sends the command to set all breakpoints.
-	 * For the ZXNext all breakpoints are set at once just before the
-	 * next 'continue' is executed.
 	 * @param bpAddresses The breakpoint addresses. Each 0x0000-0xFFFF.
 	 * @returns A Promise with the memory contents from each breakpoint address.
 	 */

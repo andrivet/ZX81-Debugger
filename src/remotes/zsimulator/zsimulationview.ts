@@ -519,16 +519,6 @@ export class ZSimulationView extends BaseView {
 				visualMem = this.simulator.memory.getVisualMemory();
 			}
 
-			if (this.simulator.zsim.zxBeeper) {
-				// Audio
-				audio = this.simulator.getZxBeeperBuffer();
-			}
-
-			if (this.simulator.zxnDMA) {
-				// DMA
-				zxnDMA = this.simulator.zxnDMA.getState();
-			}
-
 			// Create message to update the webview
 			const message = {
 				command: 'update',
@@ -675,9 +665,6 @@ export class ZSimulationView extends BaseView {
 
 		// Setup the body
 		const visualMemoryZxScreen = zsim.memoryModel.includes('ZX') && (!zsim.memoryModel.includes('81'));
-		let initialBeeperValue = 0;
-		if (this.simulator.zxBeeper)
-			this.simulator.zxBeeper.getCurrentBeeperValue();
 		let jsCustomCode = '';
 		if (this.customUiPath) {
 			try {
@@ -829,133 +816,6 @@ export class ZSimulationView extends BaseView {
 			<!-- Display the screen gif -->
 			<canvas id="screen_img_id" width="256" height="192" style="image-rendering:pixelated; outline: 1px solid var(--vscode-foreground); width:100%; height:100%; box-sizing: border-box;">
 			</canvas>
-			`;
-		}
-
-		// Add code for the ZX beeper
-		if (zsim.zxBeeper) {
-			html += `
-			<details open="true">
-			<summary>ZX Beeper</summary>
-			<span>
-				<img src="assets/loudspeaker.svg" width="20em"></img>
-				&nbsp;
-			</span>
-
-			<!-- 0/1 visual output -->
-			<span id="beeper.output" style="display:table-cell; vertical-align: middle; width: 4em">${initialBeeperValue.toString()}</span>
-
-			<!-- Volume slider -->
-			<span style="display:table-cell; vertical-align: middle;">-</span>
-
-			<span>
-				<input id="audio.volume" type="range" min="0" max="1" step="0.01" value="0" oninput="volumeChanged(parseFloat(this.value))">
-			</span>
-			<span>+</span>
-
-			</details>
-			`;
-		}
-
-		// Add code for the DMA
-		if (zsim.zxnDMA) {
-			html += `
-			<details open="true">
-			<summary>zxnDMA</summary>
-
-			<div style="padding-left: 1em;">
-				<!-- DMA Activated/Stopped-->
-				<div style="white-space: nowrap;">
-					<span>DMA&nbsp;</span>
-					<span id="zxnDMA.dmaActive"></span>
-				</div>
-
-				<!-- Port A/B Start, length -->
-				<div style="white-space: nowrap;">
-					<span>Port A Start=</span>
-					<span id="zxnDMA.portAstartAddress"></span>
-					<span>&nbsp;</span>
-					<span id="zxnDMA.transferDirectionPortAtoB"></span>
-					<span>&nbsp;</span>
-					<span>Port B Start=</span>
-					<span id="zxnDMA.portBstartAddress"></span>
-					<span>,&nbsp;</span>
-					<span>Block Length=</span>
-					<span id="zxnDMA.blockLength"></span>
-				</div>
-
-				<!-- Port A/B Counter, Block Counter -->
-				<div style="white-space: nowrap;" title="The current valuues">
-					<span>Port A Address=</span>
-					<span id="zxnDMA.portAaddressCounter"></span>
-					<span>,&nbsp;</span>
-					<span>Port B Address=</span>
-					<span id="zxnDMA.portBaddressCounter"></span>
-					<span>,&nbsp;</span>
-					<span>Block Counter=</span>
-					<span id="zxnDMA.blockCounter"></span>
-				</div>
-
-				<!-- Port A: memory/io, increment, cycle -->
-				<div style="white-space: nowrap;">
-					<span>Port A:&nbsp;</span>
-					<span id="zxnDMA.portAmode"></span>
-					<span>,&nbsp;</span>
-					<span>Increment=</span>
-					<span id="zxnDMA.portAadd"></span>
-					<span>,&nbsp;</span>
-					<span>Cycle length=</span>
-					<span id="zxnDMA.portAcycleLength"></span>
-				</div>
-
-				<!-- Port B: memory/io, increment, cycle -->
-				<div style="white-space: nowrap;">
-					<span>Port B:&nbsp;</span>
-					<span id="zxnDMA.portBmode"></span>
-					<span>,&nbsp;</span>
-					<span>Increment=</span>
-					<span id="zxnDMA.portBadd"></span>
-					<span>,&nbsp;</span>
-					<span>Cycle length=</span>
-					<span id="zxnDMA.portBcycleLength"></span>
-				</div>
-
-				<!-- Mode, pre-scalar, auto-restart -->
-				<div style="white-space: nowrap;">
-					<span>Mode:&nbsp;</span>
-					<span id="zxnDMA.mode"></span>
-					<span>,&nbsp;</span>
-					<span>Prescalar=</span>
-					<span id="zxnDMA.zxnPrescalar"></span>
-					<span>,&nbsp;</span>
-					<span>EOB-action=</span>
-					<span id="zxnDMA.eobAction"></span>
-				</div>
-
-				<!-- Status Byte -->
-				<div style="white-space: nowrap;">
-					<span>Status Byte:&nbsp;</span>
-					<span><ui-byte id="zxnDMA.statusByte" bytevalue="33" oncolor="white" offcolor="gray" digitvalue="0" title="Bit 0: T = 1 if at least one byte has been transferred\nBit 5: E = 0 if total block length at least transferred once" />
-					</span>
-				</div>
-
-				<!-- Read Mask, last sequence bit -->
-				<div style="white-space: nowrap;">
-					<span>Read Mask:&nbsp;</span>
-					<span><ui-byte id="zxnDMA.readMask" numberofbits="7" bytevalue="0" digitvalue="0" title="Last read bit is highlighted.\nBit 0: Status Byte\nBit 1: Block Counter Low\nBit 2: Block Counter High\nBit 3: Port A Address Low\nBit 4: Port A Address High\nBit 5: Port B Address Low\nBit 6: Port B Address High" />
-					</span>
-				</div>
-
-				<!-- Last Operation -->
-				<div style="white-space: nowrap;">
-					<span>Last Operation:&nbsp;</span>
-					<span id="zxnDMA.lastOperation"></span>
-				</div>
-
-			</div>
-
-			</details>
-			<br>
 			`;
 		}
 
@@ -1262,7 +1122,7 @@ export class ZSimulationView extends BaseView {
 			volume = 0.75;
 		const sendMsg = {
 			command: 'init',
-			audioSampleRate: zsim.audioSampleRate,
+			audioSampleRate: 0,
 			zxKeyboard: zsim.zxKeyboard,
 			volume,
 			ulaScreen: zsim.ulaScreen,

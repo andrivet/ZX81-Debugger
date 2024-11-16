@@ -11,19 +11,11 @@ import {CpuHistoryClass, CpuHistory, DecodeStandardHistoryInfo} from '../cpuhist
 import {ZSimCpuHistory} from './zsimcpuhistory';
 import {MemoryModel} from '../MemoryModel/memorymodel';
 import {SimulatedMemory} from './simulatedmemory';
-import {SnaFile} from '../dzrp/snafile';
-import {NexFile} from '../dzrp/nexfile';
 import {CustomCode} from './customcode';
-import {BeeperBuffer, ZxBeeper} from './zxbeeper';
 import {GenericBreakpoint} from '../../genericwatchpoint';
 import {Z80RegistersStandardDecoder} from '../z80registersstandarddecoder';
 import {MemoryModelAllRam} from '../MemoryModel/genericmemorymodels';
-import {MemoryModelZx128k, MemoryModelZx16k, MemoryModelZx48k} from '../MemoryModel/zxspectrummemorymodels';
-import {MemoryModelZxNextOneROM, MemoryModelZxNextTwoRom} from '../MemoryModel/zxnextmemorymodels';
-import {MemoryModelColecoVision} from '../MemoryModel/colecovisionmemorymodels';
 import {MemoryModelZX81_1k, MemoryModelZX81_2k, MemoryModelZX81_16k, MemoryModelZX81_32k, MemoryModelZX81_48k, MemoryModelZX81_56k} from '../MemoryModel/zx81memorymodels';
-import {SpectrumUlaScreen} from './spectrumulascreen';
-import {ZxnDma} from './zxndma';
 import {Zx81UlaScreen} from './zx81ulascreen';
 import {ZxKeyboard} from './zxkeyboard';
 import {CustomJoystick} from './customjoystick';
@@ -49,7 +41,7 @@ export class ZSimRemote extends DzrpRemote {
 	public ports: Z80Ports;
 
 	// The ULA screen simulation.
-	public zxUlaScreen: Zx81UlaScreen | SpectrumUlaScreen;
+	public zxUlaScreen: Zx81UlaScreen;
 
 	// The loading emulation.
 	protected zx81LoadOverlay: Zx81LoadOverlay;
@@ -71,15 +63,6 @@ export class ZSimRemote extends DzrpRemote {
 	// if PC does not change. Used for LDIR, HALT.
 	protected previouslyStoredPCHistory: number;
 
-	// TBBlue register handling.
-	protected tbblueRegisterSelectValue: number;
-
-	// Maps function handlers to registers (the key). As key the tbblueRegisterSelectValue is used.
-	protected tbblueRegisterWriteHandler: Map<number, (value: number) => void>;
-
-	// Same for reading the register.
-	protected tbblueRegisterReadHandler: Map<number, () => number>;
-
 	// Custom code to simulate peripherals (in/out)
 	public customCode: CustomCode;
 
@@ -99,18 +82,8 @@ export class ZSimRemote extends DzrpRemote {
 	// Is set/reset by the ZSimulatorView to request processing time.
 	protected timeoutRequest: boolean;
 
-	// ZX Beeper simulation
-	public zxBeeper: ZxBeeper;
-
 	// Can be enabled through commands to break when an interrupt occurs.
 	protected breakOnInterrupt: boolean;
-
-	// The current TBBlue CPU speed.
-	// b00 = 3.5MHz, b01 = 7MHz, b10 = 14MHz, b11 = 28MHz.
-	protected tbblueCpuSpeed: number;
-
-	// The zxnDMA object. Or undefined if not used.
-	public zxnDMA: ZxnDma;
 
 	// The zx81 or spectrum keyboard.
 	public zxKeyboard: ZxKeyboard;
@@ -146,9 +119,6 @@ export class ZSimRemote extends DzrpRemote {
 
 		this.timeoutRequest = false;
 		this.previouslyStoredPCHistory = -1;
-		this.tbblueRegisterSelectValue = 0;
-		this.tbblueRegisterWriteHandler = new Map<number, (value: number) => void>();
-		this.tbblueRegisterReadHandler = new Map<number, () => number>();
 		this.passedTstates = 0;
 		this.prevPassedTstates = 0;
 		this.timeStep = this.zsim.customCode.timeStep;
@@ -156,7 +126,6 @@ export class ZSimRemote extends DzrpRemote {
 		this.stopCpu = true;
 		this.lastBpId = 0;
 		this.breakOnInterrupt = false;
-		this.tbblueCpuSpeed = 0;
 		this.executors = [];
 		// Set decoder
 		Z80Registers.decoder = new Z80RegistersStandardDecoder();
@@ -177,123 +146,6 @@ export class ZSimRemote extends DzrpRemote {
 	public setTimeoutRequest(on: boolean) {
 		this.timeoutRequest = on;
 	}
-
-
-	/** Selects active port for TBBlue/Next feature configuration.
-	 * See https://wiki.specnext.dev/TBBlue_Register_Select
-	 * The value is just stored, no further action.
-	 * @param port The written port. (0x243B)
-	 * @param value The tbblue register to select.
-	 */
-	protected tbblueRegisterSelect(port: number, value: number) {
-		this.tbblueRegisterSelectValue = value;
-	}
-
-
-	/** Writes the selected TBBlue control register.
-	 * See https://wiki.specnext.dev/TBBlue_Register_Access
-	 * Acts according the value and tbblueRegisterSelectValue,
-	 * i.e. calls the mapped function for the selected register.
-	 * At the moment only the memory slot functions are executed.
-	 * @param port The port.
-	 * @param value The tbblue register to select.
-	 */
-	protected tbblueRegisterWriteAccess(port: number, value: number) {
-		const func = this.tbblueRegisterWriteHandler.get(this.tbblueRegisterSelectValue);
-		if (func)
-			func(value);
-	}
-
-
-	/** Reads the selected TBBlue control register.
-	 * See https://wiki.specnext.dev/TBBlue_Register_Access
-	 * Acts according the value and tbblueRegisterSelectValue,
-	 * i.e. calls the mapped function for the selected register.
-	 * At the moment only the memory slot functions are executed.
-	 * @param port The port.
-	 */
-	protected tbblueRegisterReadAccess(port: number): number {
-		const func = this.tbblueRegisterReadHandler.get(this.tbblueRegisterSelectValue);
-		if (!func)
-			return 0;
-		// Get value
-		const value = func();
-		return value;
-	}
-
-
-	/** Changes the tbblue slot/bank association for slots 0-7.
-	 * See https://wiki.specnext.dev/Memory_management_slot_0_bank
-	 * tbblueRegisterSelectValue contains the register (0x50-0x57) respectively the
-	 * slot.
-	 * @param value The bank to map.
-	 */
-	protected tbblueMemoryManagementSlotsWrite(value: number) {
-		const slot = this.tbblueRegisterSelectValue & 0x07;
-		if (value == 0xFF) {
-			// Handle ROM specially
-			if (slot > 1)
-				return;	// not allowed
-			// Choose ROM bank according slot
-			if (slot == 0)
-				value = 0xFE;
-		}
-		else if (value > 223)
-			return;	// not existing bank
-
-		// Change the slot/bank
-		this.memory.setSlot(slot, value);
-	}
-
-
-	/** Reads the tbblue slot/bank association for slots 0-7.
-	 * See https://wiki.specnext.dev/Memory_management_slot_0_bank
-	 * tbblueRegisterSelectValue contains the register (0x50-0x57) respectively the
-	 * slot.
-	 */
-	protected tbblueMemoryManagementSlotsRead(): number {
-		const slot = this.tbblueRegisterSelectValue & 0x07;
-		// Change the slot/bank
-		let bank = this.memory.getSlots()[slot];
-		// Check for ROM = 0xFE
-		if (bank == 0xFE)
-			bank = 0xFF;
-		return bank;
-	}
-
-
-	/** Changes the cpu speed.
-	 * @param value Last 2 bits = the new speed:
-	 * b00 = 3.5MHz, b01 = 7MHz, b10 = 14MHz, b11 = 28MHz.
-	 * Note: 28Mhz will add an extra NOP for each instruction.
-	 * NOT IMPLEMENTED.
-	 */
-	protected tbblueCpuSpeedWrite(value: number) {
-		const cpuSpeed = value & 0b11;
-		// Set the cpu frequency
-		const cpuFrequency = (1 << cpuSpeed) * 3500000;	// 3.5MHz, 7MHz, 14MHz, 28Mhz
-		const extraTcycle = (cpuSpeed == 3) ? 1 : 0;
-		this.z80Cpu.setExtraTstatesPerInstruction(extraTcycle);
-		this.z80Cpu.setCpuFreq(cpuFrequency);
-		// Update also the ZXBeeper
-		this.zxBeeper?.setCpuFrequency(cpuFrequency);
-		// Remember the speed
-		this.tbblueCpuSpeed = cpuSpeed;
-	}
-
-
-	/** Reads the tbblue cpu speed.
-	 * The real port read makes a difference between programmed and actual speed.
-	 * This function here does not.
-	 * @returns Bit 4-5: current speed, bits 0-1: programmed speed.
-	 * b00 = 3.5MHz, b01 = 7MHz, b10 = 14MHz, b11 = 28MHz.
-	 */
-	protected tbblueCpuSpeedRead(): number {
-		const cpuSpeed = this.tbblueCpuSpeed;
-		const cpuSpeedBoth = (cpuSpeed << 4) | cpuSpeed;
-		return cpuSpeedBoth;
-	}
-
 
 	/**
 	 * Configures the machine.
@@ -318,23 +170,6 @@ export class ZSimRemote extends DzrpRemote {
 		// Create ports for paging
 		this.ports = new Z80Ports(zsim.defaultPortIn === 0xFF);
 
-		// Check for beeper and border (both use the same port)
-		const zxBeeperEnabled = zsim.zxBeeper;
-		// Check if beeper enabled
-		if (zxBeeperEnabled) {
-			// Create the beeper simulation object
-			this.zxBeeper = new ZxBeeper(zsim.cpuFrequency, zsim.audioSampleRate, zsim.updateFrequency);
-			this.serializeObjects.push(this.zxBeeper);
-			// Add the port only if enabled
-			this.ports.registerGenericOutPortFunction((port: number, value: number) => {
-				// The port 0xFE. Every even port address will do.
-				if ((port & 0x01) === 0) {
-					// Write beeper (bit 4, EAR)
-					this.zxBeeper.writeBeeper(this.passedTstates, (value & 0b10000) != 0);
-				}
-			});
-		}
-
 		// Check for keyboard
 		const zxKeyboard = (zsim.zxKeyboard !== 'none') || zsim.zxInterface2Joy;
 		if (zxKeyboard) {
@@ -347,38 +182,10 @@ export class ZSimRemote extends DzrpRemote {
 			this.customJoystick = new CustomJoystick(this.ports, customJoy);
 		}
 
-		// Check for tbblue port
-		const regTurboMode = zsim.tbblue.REG_TURBO_MODE;
-		if (regTurboMode) {
-			// Register the tbblue register
-			this.tbblueRegisterWriteHandler.set(0x07, this.tbblueCpuSpeedWrite.bind(this));
-			this.tbblueRegisterReadHandler.set(0x07, this.tbblueCpuSpeedRead.bind(this));
-		}
-
 		// Configure different memory models
 		switch (zsim.memoryModel) {
 			case "RAM":	// 64K RAM, no ZX
 				this.memoryModel = new MemoryModelAllRam();
-				break;
-			case "ZX16K":	// ZX Spectrum 16K
-				this.memoryModel = new MemoryModelZx16k();
-				break;
-			case "ZX48K":	// ZX Spectrum 48K
-				this.memoryModel = new MemoryModelZx48k();
-				break;
-			case "ZX128K":	// ZX Spectrum 128K
-				this.memoryModel = new MemoryModelZx128k();
-				break;
-			case "ZXNEXT":	// ZX Next
-				this.memoryModel = new MemoryModelZxNextTwoRom();
-				// Bank switching.
-				for (let tbblueRegister = 0x50; tbblueRegister <= 0x57; tbblueRegister++) {
-					this.tbblueRegisterWriteHandler.set(tbblueRegister, this.tbblueMemoryManagementSlotsWrite.bind(this));
-					this.tbblueRegisterReadHandler.set(tbblueRegister, this.tbblueMemoryManagementSlotsRead.bind(this));
-				}
-				break;
-			case "COLECOVISION":	// Colecovision
-				this.memoryModel = new MemoryModelColecoVision();
 				break;
 			case "CUSTOM":			// Custom Memory Model
 				this.memoryModel = new MemoryModel(zsim.customMemory);
@@ -423,9 +230,6 @@ export class ZSimRemote extends DzrpRemote {
 		// Check if ULA screen is enabled
 		const zxUlaScreen = zsim.ulaScreen;
 		switch(zxUlaScreen) {
-			case 'spectrum':
-				this.zxUlaScreen = new SpectrumUlaScreen(this.z80Cpu);
-				break;
 			case 'zx81':
 				{
 					const options = zsim.ulaOptions;
@@ -450,41 +254,6 @@ export class ZSimRemote extends DzrpRemote {
 			});
 			this.executors.push(this.zxUlaScreen);	// After z80cpu
 			this.serializeObjects.push(this.zxUlaScreen);
-		}
-
-		// If tbblue write or read handler are used, then
-		// install them.
-		if (this.tbblueRegisterWriteHandler.size ||
-			this.tbblueRegisterReadHandler.size) {
-			// Register out port 0x243B
-			this.ports.registerSpecificOutPortFunction(0x243B, this.tbblueRegisterSelect.bind(this));
-			// Register out port 0x253B
-			this.ports.registerSpecificOutPortFunction(0x253B, this.tbblueRegisterWriteAccess.bind(this));
-			// Register in port 0x253B
-			this.ports.registerSpecificInPortFunction(0x253B, this.tbblueRegisterReadAccess.bind(this));
-		}
-
-		// Look for DMA. If present it will wrap the instruction execute function
-		// and if a DMA operation is present it will do the DMA instead.
-		const zxnDMA = zsim.zxnDMA;
-		if (zxnDMA) {
-			// Create the zxnDMA object
-			this.zxnDMA = new ZxnDma(this.memory, this.ports);
-			this.executors.unshift(this.zxnDMA);	// Before z80cpu
-			this.serializeObjects.push(this.zxnDMA);
-			// Create the read/write port
-			// Register out port $xx6B
-			this.ports.registerGenericOutPortFunction((port: number, value: number) => {
-				if ((port & 0x6B) !== 0x6B)
-					return undefined;
-				this.zxnDMA.writePort(value)
-			});
-			// Register in port $xx6B
-			this.ports.registerGenericInPortFunction((port: number) => {
-				if ((port & 0x6B) !== 0x6B)
-					return undefined;
-				return this.zxnDMA.readPort();
-			});
 		}
 
 		// Check for ZX81 load emulation from file.
@@ -1089,18 +858,6 @@ export class ZSimRemote extends DzrpRemote {
 	}
 
 
-	/** Returns the buffer with beeper values.
-	 * @returns Structure with:
-	 * time: The start time of the buffer
-	 * startValue: of the beeper (on/off)
-	 * buffer: UInt16Array of beeper lengths, each indicating how long
-	 * (in samples) the previous value lasted.
-	 */
-	public getZxBeeperBuffer(): BeeperBuffer {
-		return this.zxBeeper.getBeeperBuffer(this.passedTstates);
-	}
-
-
 	/** Loads a .p, .81 or .p81 file.
 	 * The normal load routine is overwritten to allow loading of
 	 * multiple files.
@@ -1120,140 +877,6 @@ export class ZSimRemote extends DzrpRemote {
 		// Call super
 		await super.loadBinZx81(filePath);
 	}
-
-
-	/** Loads a .sna file.
-	 * Loading is intelligent. I.e. if a SNA file from a ZX128 is loaded into a ZX48 or a ZXNEXT
-	 * it will work,
-	 * as long as no memory is used that is not present in the memory model.
-	 * E.g. as long as only 16k banks 0, 2 and 5 are used in the SNA file it
-	 * is possible to load it onto a ZX48K.
-	 * See https://faqwiki.zxnet.co.uk/wiki/SNA_format
-	 */
-	protected async loadBinSna(filePath: string): Promise<void> {
-		// Load and parse file
-		const snaFile = new SnaFile();
-		snaFile.readFile(filePath);
-
-		// If ZXNext is used then MemoryModelZxNextTwoROM should be used:
-		Utility.assert(!(this.memoryModel instanceof MemoryModelZxNextOneROM));
-
-		// 16K
-		if (this.memoryModel instanceof MemoryModelZx16k)
-			throw Error("Loading SNA file not supported for memory model '" + this.memoryModel.name + "'.");
-
-		// 48K
-		if (this.memoryModel instanceof MemoryModelZx48k) {
-			if (snaFile.is128kSnaFile)
-				throw Error("A 128K SNA file can't be loaded into a '" + this.memoryModel.name + "' memory model.");
-			for (let i = 0; i < 3; i++) {
-				const addr64k = (i + 1) * 0x4000;
-				const slots = this.memoryModel.initialSlots;
-				const {bank, offset} = this.memory.getBankAndOffsetForAddress(addr64k, slots);
-				const snaMemBank = snaFile.memBanks[i];
-				this.memory.writeMemoryData(bank, offset, snaMemBank.data, 0, snaMemBank.data.length);
-			}
-		}
-		else if (this.memoryModel instanceof MemoryModelZxNextTwoRom) {
-			// Bank numbers need to be doubled
-			for (const memBank of snaFile.memBanks) {
-				const nextBank = 2 * memBank.bank;
-				this.memory.writeMemoryData(nextBank, 0, memBank.data, 0, 0x2000);
-				this.memory.writeMemoryData(nextBank + 1, 0, memBank.data, 0x2000, 0x2000);
-			}
-		}
-		else {
-			// Write banks
-			try {
-				for (const memBank of snaFile.memBanks) {
-					this.memory.writeMemoryData(memBank.bank, 0, memBank.data, 0, memBank.data.length);
-				}
-			}
-			catch (e) {
-				const sna128String = (snaFile.is128kSnaFile) ? '128K ' : '';
-				throw Error("A " + sna128String + "SNA file can't be loaded into a '" + this.memoryModel.name + "' memory model.");
-			}
-		}
-
-		// Set the border
-		await this.sendDzrpCmdSetBorder(snaFile.borderColor);
-
-		// Set the registers
-		await this.sendDzrpCmdSetRegister(Z80_REG.PC, snaFile.pc);
-		await this.sendDzrpCmdSetRegister(Z80_REG.SP, snaFile.sp);
-		await this.sendDzrpCmdSetRegister(Z80_REG.AF, snaFile.af);
-		await this.sendDzrpCmdSetRegister(Z80_REG.BC, snaFile.bc);
-		await this.sendDzrpCmdSetRegister(Z80_REG.DE, snaFile.de);
-		await this.sendDzrpCmdSetRegister(Z80_REG.HL, snaFile.hl);
-		await this.sendDzrpCmdSetRegister(Z80_REG.IX, snaFile.ix);
-		await this.sendDzrpCmdSetRegister(Z80_REG.IY, snaFile.iy);
-		await this.sendDzrpCmdSetRegister(Z80_REG.AF2, snaFile.af2);
-		await this.sendDzrpCmdSetRegister(Z80_REG.BC2, snaFile.bc2);
-		await this.sendDzrpCmdSetRegister(Z80_REG.DE2, snaFile.de2);
-		await this.sendDzrpCmdSetRegister(Z80_REG.HL2, snaFile.hl2);
-		await this.sendDzrpCmdSetRegister(Z80_REG.R, snaFile.r);
-		await this.sendDzrpCmdSetRegister(Z80_REG.I, snaFile.i);
-		await this.sendDzrpCmdSetRegister(Z80_REG.IM, snaFile.im);
-		await this.sendDzrpCmdSetRegister(Z80_REG.I, snaFile.im);
-
-		// Interrupt (IFF2)
-		const interrupt_enabled = (snaFile.iff2 & 0b00000100) !== 0;
-		await this.sendDzrpCmdInterruptOnOff(interrupt_enabled);
-
-		// Set ROM1 or ROM0
-		if (snaFile.is128kSnaFile && (this.memoryModel instanceof MemoryModelZx128k || this.memoryModel instanceof MemoryModelZxNextTwoRom)) {
-			// Write port 7FFD
-			const port7ffd = snaFile.port7ffd;
-			this.z80Cpu.ports.write(0x7FFD, port7ffd);
-		}
-	}
-
-
-	/**
-	 * Loads a .nex file.
-	 * Loading is intelligent. I.e. if a NEX file is loaded into a ZX128,
-	 * ZX48 or even a 64k RAM memory model it will work,
-	 * as long as no memory is used that is not present in the memory model.
-	 * E.g. as long as only 16k banks 0, 2 and 5 are used in the NEX file it
-	 * is possible to load it onto a ZX48K.
-	 * See https://wiki.specnext.dev/NEX_file_format
-	 */
-	protected async loadBinNex(filePath: string): Promise<void> {
-		// Check for 128K
-		if (!(this.memoryModel instanceof MemoryModelZxNextTwoRom))
-			throw Error("A NEX file can only be loaded into a 'ZXNEXT' memory model. This is a '" + this.memoryModel.name + "' memory model.");
-
-		// Load and parse file
-		const nexFile = new NexFile();
-		nexFile.readFile(filePath);
-
-		// Set the border
-		await this.sendDzrpCmdSetBorder(nexFile.borderColor);
-
-		// Load memory banks
-		for (const memBank of nexFile.memBanks) {
-			// Convert 16K to 8K banks
-			const bank = 2 * memBank.bank;
-			this.memory.writeMemoryData(bank, 0, memBank.data, 0, 0x2000);
-			this.memory.writeMemoryData(bank + 1, 0, memBank.data, 0x2000, 0x2000);
-		}
-
-		// Set the default slot/bank association if ZXNext
-		// Convert 16k bank into 8k
-		const entryBank8 = 2 * nexFile.entryBank;
-		// Change banks in slot at 0xC000
-		await this.sendDzrpCmdSetSlot(6, entryBank8);
-		await this.sendDzrpCmdSetSlot(7, entryBank8 + 1);
-
-		// Set the SP and PC registers
-		await this.sendDzrpCmdSetRegister(Z80_REG.SP, nexFile.sp);
-		await this.sendDzrpCmdSetRegister(Z80_REG.PC, nexFile.pc);
-
-		// Set IM (Interrupt Mode) to 1 for ZX Spectrum.
-		await this.sendDzrpCmdSetRegister(Z80_REG.IM, 1);
-	}
-
-
 
 	/**
 	 * Executes a few zsim specific commands, e.g. for testing the custom javascript code.
@@ -1494,22 +1117,6 @@ tstates add value: add 'value' to t-states, then create a tick event. E.g. "zsim
 	 * @returns A Promise with an error=0 (no error).
 	  */
 	public async sendDzrpCmdSetSlot(slot: number, bank: number): Promise<number> {
-		// If ZXNext is used then MemoryModelZxNextTwoROM should be used:
-		Utility.assert(!(this.memoryModel instanceof MemoryModelZxNextOneROM));
-
-		// Special handling for ZXNext ROM:
-		if (this.memoryModel instanceof MemoryModelZxNextTwoRom) {
-			/*
-			 * For ROM only 0xFF exists. But it is ambiguous,
-			 * could be ROM0 (128k editor) or ROM1 (48k basic) (or even another ROM)
-			 * be initialized to ROM0 anyway.
-			 * So, we simply skip it. Is not called in normal operation anyway.
-			*/
-			if (bank === 0xFF) {
-				// Ignore:
-				return 1;	// Error: could not set slot
-			}
-		}
 		this.memory.setSlot(slot, bank);
 		return 0;
 	}

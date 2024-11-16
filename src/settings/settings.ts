@@ -153,15 +153,6 @@ export interface MameType {
 }
 
 
-// Definitions for ZX Next remote type.
-export interface ZxNextSerialType {
-	// The serial usb device.
-	serial: string;	// E.g. "/dev/cu.usbserial-AQ007PCD" on macOS
-	/// The serial timeout in seconds.
-	timeout: number;
-}
-
-
 // Subtype for the custom javascript code.
 export interface CustomCodeType {
 	// If true the zsim simulator view is put in debug mode which makes it easier to develop additional javascript code (see jsPath).
@@ -176,14 +167,6 @@ export interface CustomCodeType {
 	// You can set a time step (interval) to call the tick() function.
 	timeStep: number;
 }
-
-
-/// TBBlue registers. Only a very limited set is supported.
-export interface TBBlueType {
-	/// If true the cpu speed selection is enabled.
-	REG_TURBO_MODE: boolean;
-}
-
 
 // Custom joystick type to map one joystick to any port
 // and any bit.
@@ -285,8 +268,8 @@ export interface ZSimType {
 	// If enabled the simulator shows the access to the memory (0-0xFFFF) visually while the program is running.
 	visualMemory: boolean,
 
-	// If enabled it shows the contents of the ZX Spectrum or ZX 81 screen.
-	ulaScreen: 'spectrum' | 'zx81' | 'none',	// "spectrum" or "zx81"
+	// If enabled it shows the contents of the ZX81 screen.
+	ulaScreen: 'zx81' | 'none',
 
 	// Options for the zx81 screen.
 	ulaOptions: UlaOptions;
@@ -296,18 +279,10 @@ export interface ZSimType {
 	// directly into the memory. Afterwards execution is continued at 0x0207.
 	zx81LoadOverlay: boolean;
 
-	// Enables ZX Spectrum sound through it's beeper.
-	zxBeeper: boolean,
-
-	// The sample rate used for audio. Defaults to 22050 Hz.
-	audioSampleRate: number,
-
 	// Memory model: ZX16k, ZX48k, ZX128K or ZXNext.
 	// - "RAM": One memory area of 64K RAM, no banks.
 	// - "ZX16K": ROM and RAM as of the ZX Spectrum 16K.
 	// - "ZX48K": ROM and RAM as of the ZX Spectrum 48K.
-	// - "ZX128K": Banked memory as of the ZX Spectrum 48K (16k slots/banks).
-	// - "ZXNEXT": Banked memory as of the ZX Next (8k slots/banks).
 	// - "customMemory": The user can define an own memory model, see customMemory.
 	memoryModel: string,
 
@@ -343,18 +318,6 @@ export interface ZSimType {
 
 	// Settings to execute custom javascript code inside the zsim simulator.
 	customCode: CustomCodeType;
-
-	// If enabled the Z80N extended instructions are supported.
-	Z80N: boolean,
-
-	// Inside the tbblue registers available can be specified.
-	// Please note: the MMU registers are enabled already by the memoryModel
-	// "ZXNEXT" and do not appear here.
-	// Experimental
-	tbblue: TBBlueType,
-
-	// The zxnDMA hardware simulation.
-	zxnDMA: boolean;
 }
 
 
@@ -379,8 +342,8 @@ export interface SmartDisassemblerArgs {
  * The configuration parameters for the zesarux debugger.
  */
 export interface SettingsParameters extends DebugProtocol.LaunchRequestArguments {
-	/// The remote type: zesarux or zxnext.
-	remoteType: 'zrcp' | 'cspect' | 'zxnext' | 'zsim' | 'mame';
+	/// The remote type.
+	remoteType: 'zrcp' | 'cspect' | 'zsim' | 'mame';
 
 	// The special settings for zrcp (ZEsarux).
 	zrcp: ZrcpType;
@@ -393,9 +356,6 @@ export interface SettingsParameters extends DebugProtocol.LaunchRequestArguments
 
 	// The special settings for the internal Z80 simulator.
 	zsim: ZSimType;
-
-	// The special settings for the serial connection.
-	zxnext: ZxNextSerialType;
 
 	/// true if the configuration is for unit tests.
 	unitTests: false;
@@ -432,11 +392,14 @@ export interface SettingsParameters extends DebugProtocol.LaunchRequestArguments
 	/// file is loaded.
 	execAddress: string;
 
-	/// If defined the path to a snapshot (or tap) file to load at startup
+	/// If defined the path to a source file to be compiled
+	source: string;
+
+	/// If defined the path to a .P file to load at startup
 	load: string;
 
 	/// If defined, an array of paths to binary files together with start addresses to load at startup
-	loadObjs: Array<LoadObj>;
+	binaries: Array<LoadObj>;
 
 	/// Start automatically after launch.
 	startAutomatically: boolean;
@@ -460,7 +423,7 @@ export interface SettingsParameters extends DebugProtocol.LaunchRequestArguments
 	memoryViewer: {
 		addressColor: string;	// The text color of the address field.
 		bytesColor: string;	// The color of the bytes (hex values).
-		asciiColor: string;	// The text color of the ascii field.
+		charColor: string;	// The text color of the ZX81 character field.
 		addressHoverFormat: string;	// Format for the address when hovering.
 		valueHoverFormat: string;	// Format for the value when hovering.
 		registerPointerColors: Array<string>;	// The register/colors to show as colors in the memory view.
@@ -508,7 +471,6 @@ export class Settings {
 				cspect: <any>undefined,
 				mame: <any>undefined,
 				zsim: <any>undefined,
-				zxnext: <any>undefined,
 				unitTests: <any>undefined,
 				rootFolder: <any>undefined,
 				sjasmplus: <any>undefined,
@@ -522,8 +484,9 @@ export class Settings {
 				tmpDir: <any>undefined,
 				topOfStack: <any>undefined,
 				execAddress: <any>undefined,
+				source: <any>undefined,
 				load: <any>undefined,
-				loadObjs: <any>undefined,
+				binaries: <any>undefined,
 				startAutomatically: <any>undefined,
 				commandsAfterLaunch: <any>undefined,
 				history: <any>undefined,
@@ -600,27 +563,8 @@ export class Settings {
 			launchCfg.zsim.preset = 'none';
 		}
 		else {
-			// Spectrum
-			if (preset === 'spectrum') {
-				if (launchCfg.zsim.zxKeyboard === undefined)
-					launchCfg.zsim.zxKeyboard = 'spectrum';
-				if (launchCfg.zsim.zxInterface2Joy === undefined)
-					launchCfg.zsim.zxInterface2Joy = true;
-				if (launchCfg.zsim.memoryModel === undefined)
-					launchCfg.zsim.memoryModel = "ZX48K";
-				if(launchCfg.zsim.visualMemory === undefined)
-					launchCfg.zsim.visualMemory = true;
-				if(launchCfg.zsim.ulaScreen === undefined)
-					launchCfg.zsim.ulaScreen = 'spectrum';
-				if (launchCfg.zsim.zxBeeper === undefined)
-					launchCfg.zsim.zxBeeper = true;
-				if(launchCfg.zsim.cpuFrequency === undefined)
-					launchCfg.zsim.cpuFrequency = 3500000.0;	// 3.5Mhz
-				if(launchCfg.zsim.defaultPortIn === undefined)
-					launchCfg.zsim.defaultPortIn = 0xFF;
-			}
 			// ZX81
-			else if (preset === 'zx81') {
+			if (preset === 'zx81') {
 				if (launchCfg.zsim.zxKeyboard === undefined)
 					launchCfg.zsim.zxKeyboard = 'zx81';
 				if (launchCfg.zsim.memoryModel === undefined)
@@ -666,7 +610,7 @@ export class Settings {
 		if (launchCfg.zsim.ulaScreen === undefined || launchCfg.zsim.ulaScreen as any === false)
 			launchCfg.zsim.ulaScreen = 'none';
 		else if (launchCfg.zsim.ulaScreen as any === true) // Old config
-			launchCfg.zsim.ulaScreen = 'spectrum';
+			launchCfg.zsim.ulaScreen = 'zx81';
 		if (launchCfg.zsim.ulaOptions === undefined) {
 			launchCfg.zsim.ulaOptions = {
 			} as UlaOptions;
@@ -699,17 +643,7 @@ export class Settings {
 			if (screenArea.lastY === undefined)
 				screenArea.lastY = 248;
 		}
-		else if (ulaScreen === 'spectrum') {
-			if (screenArea.firstX === undefined)
-				screenArea.firstX = 48;
-			if (screenArea.lastX === undefined)
-				screenArea.lastX = 304;
-			if (screenArea.firstY === undefined)
-				screenArea.firstY = 56;
-			if (screenArea.lastY === undefined)
-				screenArea.lastY = 248;
-		}
-
+		
 		// Subtract border
 		if (bSize === undefined)
 			bSize = 10;	// Default border
@@ -749,10 +683,6 @@ export class Settings {
 		if (chroma81.colourizationFile === undefined)
 			chroma81.colourizationFile = '';
 
-		if (launchCfg.zsim.zxBeeper === undefined)
-			launchCfg.zsim.zxBeeper = false;
-		if (launchCfg.zsim.audioSampleRate === undefined)
-			launchCfg.zsim.audioSampleRate = 22050;
 		if (launchCfg.zsim.cpuLoad === undefined)
 			launchCfg.zsim.cpuLoad = 10;
 		if (launchCfg.zsim.visualMemory === undefined)
@@ -768,14 +698,6 @@ export class Settings {
 			launchCfg.zsim.updateFrequency = 10.0;
 		if (launchCfg.zsim.defaultPortIn === undefined)
 			launchCfg.zsim.defaultPortIn = 0xFF;
-		if (launchCfg.zsim.Z80N === undefined)
-			launchCfg.zsim.Z80N = false;
-		if (launchCfg.zsim.tbblue === undefined)
-			launchCfg.zsim.tbblue = {REG_TURBO_MODE: false} as TBBlueType;
-
-		// Check for DMA
-		if (launchCfg.zsim.zxnDMA === undefined)
-			launchCfg.zsim.zxnDMA = false;
 
 		// Check update frequency ranges
 		if (launchCfg.zsim.updateFrequency < 5.0)
@@ -832,15 +754,6 @@ export class Settings {
 					bank.romOffset = Utility.convertHexNumber(bank.romOffset);
 				}
 			}
-		}
-
-		// zxnext
-		if (!launchCfg.zxnext) {
-			launchCfg.zxnext = {} as ZxNextSerialType;
-			// Note: if 'serial' is undefined and type is 'zxnext', this will create an error
-		}
-		if (launchCfg.zxnext.timeout === undefined) {
-			launchCfg.zxnext.timeout = 5;	// Seconds
 		}
 
 		// sjasmplus
@@ -947,6 +860,13 @@ export class Settings {
 			launchCfg.topOfStack = 'UNITTEST_STACK';
 		}
 
+		if (launchCfg.source) {
+			const usource = UnifiedPath.getUnifiedPath(launchCfg.source)
+			launchCfg.source = Utility.getAbsFilePath(usource, rootFolder);
+		}
+		else
+			launchCfg.source = '';
+
 		if (launchCfg.load) {
 			const uload = UnifiedPath.getUnifiedPath(launchCfg.load)
 			launchCfg.load = Utility.getAbsFilePath(uload, rootFolder);
@@ -954,9 +874,9 @@ export class Settings {
 		else
 			launchCfg.load = '';
 
-		if (!launchCfg.loadObjs)
-			launchCfg.loadObjs = [];
-		for (let loadObj of launchCfg.loadObjs) {
+		if (!launchCfg.binaries)
+			launchCfg.binaries = [];
+		for (let loadObj of launchCfg.binaries) {
 			if (loadObj.path) {
 				const loadObjPath = UnifiedPath.getUnifiedPath(loadObj.path)
 				loadObj.path = Utility.getAbsFilePath(loadObjPath, rootFolder);
@@ -1085,8 +1005,8 @@ export class Settings {
 			launchCfg.memoryViewer.addressColor = "CornflowerBlue";
 		if (!launchCfg.memoryViewer.bytesColor)
 			launchCfg.memoryViewer.bytesColor = "var(--vscode-editor-foreground)";	// Different dependent on dark or light theme.
-		if (!launchCfg.memoryViewer.asciiColor)
-			launchCfg.memoryViewer.asciiColor = "OliveDrab";
+		if (!launchCfg.memoryViewer.charColor)
+			launchCfg.memoryViewer.charColor = "OliveDrab";
 		if (!launchCfg.memoryViewer.addressHoverFormat)
 			launchCfg.memoryViewer.addressHoverFormat = "${hex}h${\n:labelsplus|\n}";
 		if (!launchCfg.memoryViewer.valueHoverFormat)
@@ -1146,22 +1066,10 @@ export class Settings {
 
 		// Check remote type
 		const rType = Settings.launch.remoteType;
-		const allowedTypes = ['zrcp', 'cspect', 'zxnext', 'zsim', 'mame'];
+		const allowedTypes = ['zrcp', 'cspect', 'zsim', 'mame'];
 		const found = (allowedTypes.indexOf(rType) >= 0);
 		if (!found) {
 			throw Error("'remoteType': Remote type '" + rType + "' does not exist. Allowed are " + allowedTypes.join(', ') + ".");
-		}
-
-		// Check 'serial' if 'zxnext' was selected
-		if (rType === 'zxnext') {
-			if (Settings.launch.zxnext.serial === undefined) {
-				throw Error("For remoteType 'zxnext' you need to set the 'zxnext.serial' property for the serial interface.");
-			}
-			// Check that the old properties are not used
-			const oldZxnext = Settings.launch.zxnext as any;
-			if (oldZxnext.port !== undefined || oldZxnext.hostname !== undefined || oldZxnext.socketTimeout !== undefined) {
-				throw Error("For 'zxnext' the properties 'port', 'hostname' and 'socketTimeout' are not used anymore. Use 'serial' instead.");
-			}
 		}
 
 		// List files (=Assembler configurations)
@@ -1199,7 +1107,7 @@ export class Settings {
 			}
 		}
 
-		// sna or .P files (ZX81)
+		// .P files (ZX81)
 		if (Settings.launch.load) {
 			// Check that file exists
 			if (!fs.existsSync(Settings.launch.load))
@@ -1210,7 +1118,7 @@ export class Settings {
 		}
 
 		// Object files
-		for (let loadObj of Settings.launch.loadObjs) {
+		for (let loadObj of Settings.launch.binaries) {
 			// Check that file exists
 			const path = loadObj.path;
 			if (!fs.existsSync(path))
@@ -1257,7 +1165,7 @@ export class Settings {
 
 		// Check ula screen
 		const ulaScreen = Settings.launch.zsim.ulaScreen;
-		if (ulaScreen !== 'spectrum' && ulaScreen !== 'zx81' && ulaScreen !== 'none') {
+		if (ulaScreen !== 'zx81' && ulaScreen !== 'none') {
 			throw Error("'ulaScreen': Allowed values are 'spectrum' or 'zx81'.");
 		}
 		const ulaOptions = Settings.launch.zsim.ulaOptions;

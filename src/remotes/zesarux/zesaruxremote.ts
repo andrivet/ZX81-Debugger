@@ -6,14 +6,12 @@ import {GenericWatchpoint, GenericBreakpoint} from '../../genericwatchpoint';
 import {RemoteBase, RemoteBreakpoint} from '../remotebase';
 import {ZesaruxCpuHistory, DecodeZesaruxHistoryInfo} from './zesaruxcpuhistory';
 import {Z80RegistersClass, Z80Registers} from '../z80registers';
-import {DecodeZesaruxRegisters, DecodeZesaruxRegistersColecovision, DecodeZesaruxRegistersZx128k, DecodeZesaruxRegistersZx16k, DecodeZesaruxRegistersZx48k, DecodeZesaruxRegistersZxNext} from './decodezesaruxdata';
+import {DecodeZesaruxRegisters} from './decodezesaruxdata';
 import {CpuHistory, CpuHistoryClass} from '../cpuhistory';
 import {PromiseCallbacks} from '../../misc/promisecallbacks';
 import {MemoryModelUnknown} from '../MemoryModel/genericmemorymodels';
-import {MemoryModelZx128k, MemoryModelZx16k, MemoryModelZx48k} from '../MemoryModel/zxspectrummemorymodels';
-import {MemoryModelZxNextTwoRom} from '../MemoryModel/zxnextmemorymodels';
 import * as semver from 'semver';
-import {MemoryModelColecoVision} from '../MemoryModel/colecovisionmemorymodels';
+import { MemoryModelZX81_48k } from '../MemoryModel/zx81memorymodels';
 
 
 /// Minimum required ZEsarUX version.
@@ -232,42 +230,9 @@ export class ZesaruxRemote extends RemoteBase {
 					// Load executable
 					await this.load();
 
-					// Get the machine type, e.g. tbblue, zx48k etc.
-					// Is required to find the right slot/bank paging.
-					// Distinguished are only: 48k, 128k and tbblue.
-					const mtResp = await zSocket.sendAwait('get-current-machine') as string;
-					const machineType = mtResp.toLowerCase();
-					if (machineType.includes("tbblue") || machineType.includes("zx spectrum next")) {
-						// "ZX Spectrum Next" since zesarux 9.2.
-						// 8x8k banks
-						Z80Registers.decoder = new DecodeZesaruxRegistersZxNext();
-						this.memoryModel = new MemoryModelZxNextTwoRom();
-					}
-					else if (machineType.includes("128k")) {
-						// 4x16k banks
-						Z80Registers.decoder = new DecodeZesaruxRegistersZx128k();
-						this.memoryModel = new MemoryModelZx128k();
-					}
-					else if (machineType.includes("48k")) {
-						// 4x16k banks
-						Z80Registers.decoder = new DecodeZesaruxRegistersZx48k();
-						this.memoryModel = new MemoryModelZx48k();
-					}
-					else if (machineType.includes("16k")) {
-						// 4x16k banks
-						Z80Registers.decoder = new DecodeZesaruxRegistersZx16k();
-						this.memoryModel = new MemoryModelZx16k();
-					}
-					else if (machineType.includes("colecovision")) {
-						// 4 Banks
-						Z80Registers.decoder = new DecodeZesaruxRegistersColecovision();
-						this.memoryModel = new MemoryModelColecoVision();
-					}
-					else {
-						// For all others:
-						Z80Registers.decoder = new DecodeZesaruxRegisters(1);
-						this.memoryModel = new MemoryModelUnknown();
-					}
+					Z80Registers.decoder = new DecodeZesaruxRegisters(1);
+					this.memoryModel = new MemoryModelUnknown();
+					
 					// Init
 					this.memoryModel.init();
 
@@ -426,7 +391,7 @@ export class ZesaruxRemote extends RemoteBase {
 	 * @param bank The bank for the slot.
 	 */
 	public async setSlot(slotIndex: number, bank: number): Promise<void> {
-		await zSocket.sendAwait('tbblue-set-register ' + (0x50 + slotIndex) + ' ' + bank);
+		// tbblue not supported, so do nothing
 	}
 
 
@@ -1068,7 +1033,7 @@ export class ZesaruxRemote extends RemoteBase {
 			if (bank != -1) {
 				// Yes, it's a long address
 				// Check for ZX128K: ZEsarUX uses different wording:
-				if (this.memoryModel instanceof MemoryModelZx128k) {
+				if (this.memoryModel instanceof MemoryModelZX81_48k) {
 					// ZX128K:
 					// 0000-3FFF:	ROM
 					// 4000-BFFF: 	-
@@ -1083,19 +1048,6 @@ export class ZesaruxRemote extends RemoteBase {
 						// RAM
 						condition += ' and RAM=' + bank;
 					}
-				}
-				else if (this.memoryModel instanceof MemoryModelZxNextTwoRom) {
-					// ZXNext
-					const slot = Z80Registers.getSlotFromAddress(address);
-					// Treat ROM banks special for ZEsarUX
-					if (bank >= 0xFC && bank <= 0xFF) {	// 252 - 255
-						// 0xFC = 252 -> 8000h
-						// 0xFD = 253 -> 8001h
-						// 0xFE = 254 -> 8002h
-						// 0xFF = 255 -> 8003h
-						bank = 0x8000 + (bank & 0x3)
-					}
-					condition += ' and SEG' + slot + '=' + bank;
 				}
 			}
 			// Add BP condition
@@ -1365,147 +1317,6 @@ export class ZesaruxRemote extends RemoteBase {
 	}
 
 
-	// ZX Next related ---------------------------------
-
-
-	/**
-	 * Retrieves the TBBlue register value from the emulator.
-	 * @param registerNr The number of the register.
-	 * @returns A promise with the value of the register.
-	 */
-	public async getTbblueRegister(registerNr: number): Promise<number> {
-		const data = await zSocket.sendAwait('tbblue-get-register ' + registerNr);
-		// Check for error
-		if (data.startsWith("ERROR")) {
-			return 0;
-		}
-		// Value is returned as 2 digit hex number followed by "H", e.g. "00H"
-		const valueString = data.substring(0, 2);
-		const value = parseInt(valueString, 16);
-		// Call handler
-		return value;
-	}
-
-
-	/**
-	 * Retrieves the sprites palette from the emulator.
-	 * @param paletteNr 0 or 1.
-	 * @returns A Promise that returns a 256 byte Array<number> with the palette values.
-	 */
-	public async getTbblueSpritesPalette(paletteNr: number): Promise<Array<number>> {
-
-		const paletteNrString = (paletteNr == 0) ? 'first' : 'second';
-		const data = await zSocket.sendAwait('tbblue-get-palette sprite ' + paletteNrString + ' 0 256');
-		const palette = new Array<number>(256);
-		// Check for error
-		if (!data.startsWith("ERROR")) {
-			// Palette is returned as 3 digit hex separated by spaces, e.g. "02D 168 16D 000"
-			for (let i = 0; i < 256; i++) {
-				const l = i * 4;
-				const colorString = data.substring(l, l + 3);
-				const color = parseInt(colorString, 16);
-				// ZEsarUX sends the data as RRRGGGBBB, we need to
-				// change this first to RRRGGGBB, 0000000B.
-				palette[i] = (color >>> 1);
-				if (color & 0x01)
-					palette[i] += 0x100;
-			}
-		}
-		// Call handler
-		return palette;
-	}
-
-
-	/**
-	 * Retrieves the sprites clipping window from the emulator.
-	 * @returns A Promise that returns the clipping dimensions and the control byte(xl, xr, yt, yb, control).
-	 */
-	public async getTbblueSpritesClippingWindow(): Promise<{xl: number, xr: number, yt: number, yb: number, control: number}> {
-		const data = await zSocket.sendAwait('tbblue-get-clipwindow sprite');
-		// Check for error
-		if (data.startsWith("ERROR")) {
-			return {xl: 0, xr: 0, yt: 0, yb: 0, control: 0};
-		}
-		// Returns 4 decimal numbers, e.g. "0 175 0 192 "
-		const clip = data.split(' ');
-		const xl = parseInt(clip[0]);
-		const xr = parseInt(clip[1]);
-		const yt = parseInt(clip[2]);
-		const yb = parseInt(clip[3]);
-
-		// Get the control byte
-		const control = await this.getTbblueRegister(0x15);
-		// Call handler
-		return {xl, xr, yt, yb, control};
-	}
-
-
-	/**
-	 * Retrieves the sprites from the emulator.
-	 * @param slot The start slot.
-	 * @param count The number of slots to retrieve.
-	 * @returns A Promise with an array of sprite data.
-	 */
-	public async getTbblueSprites(slot: number, count: number): Promise<Array<Uint8Array>> {
-		const data = await zSocket.sendAwait('tbblue-get-sprite ' + slot + ' ' + count);
-		const sprites = new Array<Uint8Array>();
-		// Check for error
-		if (!data.startsWith("ERROR")) {
-			// Sprites are returned one line per sprite, each line consist of 4x 2 digit hex values, e.g.
-			// "00 00 00 00"
-			// "00 00 00 00"
-			const spriteLines = data.split('\n');
-			for (const line of spriteLines) {
-				if (line.length == 0)
-					continue;
-				const sprite = new Uint8Array(5);
-				for (let i = 0; i < 5; i++) {
-					const l = i * 3;
-					const attrString = line.substring(l, l + 2);
-					if (attrString.length > 0) {
-						const attribute = parseInt(attrString, 16);
-						sprite[i] = attribute;
-					}
-				}
-				sprites.push(sprite);
-			}
-		}
-		// Call handler
-		return sprites;
-	}
-
-
-	/**
-	 * Retrieves the sprite patterns from the emulator.
-	 * @param index The start index.
-	 * @param count The number of patterns to retrieve.
-	 * @preturns A Promise with an array of sprite pattern data.
-	 */
-	public async getTbblueSpritePatterns(index: number, count: number): Promise<Array<Array<number>>> {
-		const data = await zSocket.sendAwait('tbblue-get-pattern ' + index + ' 8 ' + count);
-		const patterns = new Array<Array<number>>();
-		// Check for error
-		if (!data.startsWith("ERROR")) {
-			// Sprite patterns are returned one line per pattern, each line consist of
-			// 256x 2 digit hex values, e.g. "E3 E3 E3 E3 E3 ..."
-			const patternLines = data.split('\n');
-			patternLines.pop();	// Last element is a newline only
-			for (const line of patternLines) {
-				const pattern = new Array<number>(256);
-				for (let i = 0; i < 256; i++) {
-					const l = i * 3;
-					const attrString = line.substring(l, l + 2);
-					const attribute = parseInt(attrString, 16);
-					pattern[i] = attribute;
-				}
-				patterns.push(pattern);
-			}
-		}
-		// Call handler
-		return patterns;
-	}
-
-
 	// ------------------------------------
 
 
@@ -1547,7 +1358,7 @@ export class ZesaruxRemote extends RemoteBase {
 	 * @param path The (absolute) path to the file.
 	 */
 	public async loadBin(path: string): Promise<void> {
-		await zSocket.sendAwait('smartload "' + Settings.launch.load + '"');	// Note: this also changes cpu to tbblue
+		await zSocket.sendAwait('smartload "' + Settings.launch.load + '"');
 	}
 
 
