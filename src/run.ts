@@ -11,7 +11,7 @@ import {DebugSessionClass} from './debugadapter';
 
 
 /** Class to run a file.
- * .sna, .p and .p81 files are supported.
+ * .p and .p81 files are supported.
  */
 export class Run {
 	// Indicates if a 'Run' is currently active.
@@ -46,14 +46,8 @@ export class Run {
 			if (zsim === undefined) {
 				// Determine the parameters
 				const ext = path.extname(fsPath).toLowerCase();
-				if (ext === '.sna') {
-					zsim = {
-						preset: 'spectrum',
-						memoryModel: 'ZX128K'
-					};
-				}
-				else if (['.p', '.81', '.p81'].includes(ext)) {
-					zsim = {preset: 'zx81'};
+				if (['.p', '.81', '.p81'].includes(ext)) {
+					zsim = {};
 				}
 				else {
 					throw Error('Invalid file extension: ' + ext);

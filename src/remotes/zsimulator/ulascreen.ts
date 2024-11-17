@@ -6,7 +6,7 @@ import {ExecuteInterface} from "./executeinterface";
 import {ZSimRemote} from "./zsimremote";
 
 
-/** The base class for the ULA implementation for ZX81 and ZX Spectrum.
+/** The base class for the ULA implementation for ZX81.
  */
 export class UlaScreen extends EventEmitter implements Serializable, ExecuteInterface {
 	// Required for memory and ports.

@@ -360,7 +360,6 @@ suite('Zx81UlaScreen', () => {
 			const charset = new Uint8Array(512);
 			z80Cpu.memory.readBlock = (addr64k: number, size: number) => (addr64k === 0x1E00) ? charset : undefined as any;
 			const result = zx81UlaScreen.getUlaScreen();
-			assert.equal(result.name, 'zx81');
 			assert.equal(result.borderColor, 15);
 			assert.equal(result.charset, undefined);
 			assert.equal(result.dfile, undefined);
@@ -381,7 +380,6 @@ suite('Zx81UlaScreen', () => {
 				return undefined as any;
 			};
 			const result = zx81UlaScreen.getUlaScreen();
-			assert.equal(result.name, 'zx81');
 			assert.equal(result.borderColor, 15);
 			assert.notEqual(result.charset, undefined);
 			assert.equal(result.charset.length, 512);

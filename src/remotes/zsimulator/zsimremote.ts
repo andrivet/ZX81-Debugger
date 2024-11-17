@@ -28,7 +28,7 @@ import {Zx81LoadOverlay} from './zx81loadoverlay';
 
 /**
  * The representation of a Z80 remote.
- * With options to simulate ZX Spectrum or some ZX Next features.
+ * With options to simulate ZX81
  */
 export class ZSimRemote extends DzrpRemote {
 
@@ -85,7 +85,7 @@ export class ZSimRemote extends DzrpRemote {
 	// Can be enabled through commands to break when an interrupt occurs.
 	protected breakOnInterrupt: boolean;
 
-	// The zx81 or spectrum keyboard.
+	// The zx81 keyboard.
 	public zxKeyboard: ZxKeyboard;
 
 	// The custom joystick.
@@ -152,10 +152,6 @@ export class ZSimRemote extends DzrpRemote {
 	 * Loads the roms and sets up bank switching.
 	 * @param zsim The zsim configuration, e.g. the memory model:
 	 * - "RAM": One memory area of 64K RAM, no banks.
-	 * - "ZX48": ROM and RAM as of the ZX Spectrum 48K.
-	 * - "ZX128": Banked memory as of the ZX Spectrum 48K (16k slots/banks).
-	 * - "ZXNEXT": Banked memory as of the ZX Next (8k slots/banks).
-		   * - "COLECOVISION": Memory map for the Coleco Vision (8k slots, no banking).
 	 * - "CUSTOM": User defined memory.
 	 */
 	public configureMachine() {
@@ -171,7 +167,7 @@ export class ZSimRemote extends DzrpRemote {
 		this.ports = new Z80Ports(zsim.defaultPortIn === 0xFF);
 
 		// Check for keyboard
-		const zxKeyboard = (zsim.zxKeyboard !== 'none') || zsim.zxInterface2Joy;
+		const zxKeyboard = zsim.zxKeyboard || zsim.zxInterface2Joy;
 		if (zxKeyboard) {
 			this.zxKeyboard = new ZxKeyboard(this.ports);
 		}
@@ -195,7 +191,7 @@ export class ZSimRemote extends DzrpRemote {
 			case "ZX81-1K":	// Original ZX81 with 1K of RAM
 				this.memoryModel = new MemoryModelZX81_1k();
 				break;
-			case "ZX81-2K":	// Original Timex Spectrum with 2K of RAM
+			case "ZX81-2K":	// Original Timex Sinclair with 2K of RAM
 				this.memoryModel = new MemoryModelZX81_2k();
 				break;
 			case "ZX81-16K":	// ZX81 with a 16K RAM pack
@@ -229,23 +225,19 @@ export class ZSimRemote extends DzrpRemote {
 
 		// Check if ULA screen is enabled
 		const zxUlaScreen = zsim.ulaScreen;
-		switch(zxUlaScreen) {
-			case 'zx81':
-				{
-					const options = zsim.ulaOptions;
-					const chroma81 = options.chroma81;
-					if (options.hires) {
-						// Hires
-						this.zxUlaScreen = new Zx81UlaScreenHiRes(this.z80Cpu, options.screenArea);
-					}
-					else {
-						// Normal
-						this.zxUlaScreen = new Zx81UlaScreen(this.z80Cpu);
-					}
-					// Initialize chroma
-					this.zxUlaScreen.setChroma81(chroma81, options.debug);
-					break;
-				}
+		if(zxUlaScreen) {
+			const options = zsim.ulaOptions;
+			const chroma81 = options.chroma81;
+			if (options.hires) {
+				// Hires
+				this.zxUlaScreen = new Zx81UlaScreenHiRes(this.z80Cpu, options.screenArea);
+			}
+			else {
+				// Normal
+				this.zxUlaScreen = new Zx81UlaScreen(this.z80Cpu);
+			}
+			// Initialize chroma
+			this.zxUlaScreen.setChroma81(chroma81, options.debug);
 		}
 		if (this.zxUlaScreen) {
 			this.zxUlaScreen.on('updateScreen', () => {
@@ -259,7 +251,6 @@ export class ZSimRemote extends DzrpRemote {
 		// Check for ZX81 load emulation from file.
 		const zx81LoadOverlay = zsim.zx81LoadOverlay;
 		if (zx81LoadOverlay) {
-			// Create the zxnDMA object
 			this.zx81LoadOverlay = new Zx81LoadOverlay(this.z80Cpu);
 			this.zx81LoadOverlay.setFolder(Utility.getRootPath());
 			this.executors.unshift(this.zx81LoadOverlay);	// Before z80cpu
@@ -298,7 +289,7 @@ export class ZSimRemote extends DzrpRemote {
 		// Decide what machine
 		this.configureMachine();
 
-		// Load sna/nex and loadObjs:
+		// Load .P and binaries:
 		this.customCode?.execute();	// Need to be initialized here also because e.g. nex loading sets the border (port).
 		await this.load();
 

@@ -3,7 +3,7 @@ import {Zx81UlaDraw} from "./zx81uladraw";
 import {Zx81HiResUlaDraw} from "./zx81hiresuladraw";
 import {VisualMem} from "./visualmem";
 import {joystickObjs, initJoystickPolling} from "./joysticks";
-import {UIAPI, UiBit, UiByte} from "./helper";
+import {UIAPI, UiBit} from "./helper";
 import {UlaDraw} from "./uladraw";
 
 
@@ -30,38 +30,8 @@ const slots: HTMLElement[] = [];
 let screenImg: HTMLCanvasElement;
 let ulaDraw: UlaDraw;
 
-// Holds the HTML (UI) elements for the zxnDMA.
-let zxnDmaHtml: {
-	dmaActive: HTMLLabelElement,
-	blockLength: HTMLLabelElement,
-	portAstartAddress: HTMLLabelElement,
-	portBstartAddress: HTMLLabelElement,
-	transferDirectionPortAtoB: HTMLLabelElement,
-	portAmode: HTMLLabelElement,
-	portBmode: HTMLLabelElement,
-	portAadd: HTMLLabelElement,
-	portBadd: HTMLLabelElement,
-	portAcycleLength: HTMLLabelElement,
-	portBcycleLength: HTMLLabelElement,
-	mode: HTMLLabelElement,
-	zxnPrescalar: HTMLLabelElement,
-	eobAction: HTMLLabelElement,
-	readMask: UiByte,
-	statusByte: UiByte,
-	blockCounter: HTMLLabelElement,
-	portAaddressCounter: HTMLLabelElement,
-	portBaddressCounter: HTMLLabelElement,
-	lastOperation: HTMLLabelElement;
-};
-
-// The previous zxnDMA state (used to print changes in bold).
-let prevZxnDmaState: any = {};
-
-// Holds the list of elements that were printed in bold (i.e. had changed).
-let prevZxnDmaHighlightedElements: Array<HTMLLabelElement> = [];
-
-// The type of ZX keyboard.
-let zxKeyboardType: 'spectrum'|'zx81'|'none' = 'none';
+// ZX81 keyboard or not.
+let zxKeyboard: boolean = true;
 
 
 //---- Handle Messages from vscode extension --------
@@ -121,10 +91,6 @@ window.addEventListener('message', event => {// NOSONAR
 			if (message.visualMem) {
 				VisualMem.drawVisualMemory(message.visualMem);
 			}
-
-			if (message.zxnDMA) {
-				printZxnDma(message.zxnDMA);
-			}
 			break;
 
 		case 'receivedFromCustomLogic':
@@ -142,16 +108,10 @@ window.addEventListener('message', event => {// NOSONAR
 
 
 /** Init: Initializes parts of the simulation.
- * @param audioSampleRate In Hz.
- * @param volume Number in range [0;1.0]
- * @param zxKeyboard The type of keyboard.
  * @param screenWidth The width of the screen.
  * @param screenHeight The height of the screen.
  */
 function initSimulation(message) {
-	// Store keyboard type
-	zxKeyboardType = message.zxKeyboard;
-
 	// Store the cpu_freq_id
 	cpuFreq = document.getElementById("cpu_freq_id") as HTMLLabelElement;
 
@@ -176,19 +136,11 @@ function initSimulation(message) {
 	// Store the screen image source
 	screenImg = document.getElementById("screen_img_id") as HTMLCanvasElement;
 	if (screenImg) {
-		switch (message.ulaScreen) {
-			case 'zx81':
-				if (message.ulaOptions.hires) {
-					ulaDraw = new Zx81HiResUlaDraw(screenImg, message.ulaOptions);
-				}
-				else {
-					ulaDraw = new Zx81UlaDraw(screenImg, message.ulaOptions);
-				}
-				break;
-			case 'spectrum':
-			default:
-				ulaDraw = new Zx81UlaDraw(screenImg, message.ulaOptions);
-				break;
+		if (message.ulaOptions.hires) {
+			ulaDraw = new Zx81HiResUlaDraw(screenImg, message.ulaOptions);
+		}
+		else {
+			ulaDraw = new Zx81UlaDraw(screenImg, message.ulaOptions);
 		}
 	}
 
@@ -263,128 +215,6 @@ function cellSelect(cell, on) {
 		key: cell.id
 	});
 }
-
-
-// Highlights the element and it preceding element
-function highlightElem(elem: HTMLElement, on: boolean) {
-	const color = on ? 'red' : '';
-	elem.style.color = color; // Change the color of the current element to red
-	const prevElement = elem.previousElementSibling as HTMLElement;
-	prevElement.style.color = color;
-}
-
-
-// Print zxnDMA values, if changed in bold.
-function printZxnDma(zxnDMA) {
-	// Remove all bold elements
-	for (const elem of prevZxnDmaHighlightedElements) {
-		highlightElem(elem, false);
-	}
-	prevZxnDmaHighlightedElements = [];
-	// Update zxnDMA HTML elements
-	if (prevZxnDmaState.dmaActive !== zxnDMA.dmaActive) {
-		zxnDmaHtml.dmaActive.innerHTML = (zxnDMA.dmaActive ? "Active" : "Stopped");
-		highlightElem(zxnDmaHtml.dmaActive, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.dmaActive);
-	}
-	if (prevZxnDmaState.blockLength !== zxnDMA.blockLength) {
-		zxnDmaHtml.blockLength.innerHTML = "0x" + zxnDMA.blockLength.toString(16).toUpperCase().padStart(4, '0');
-		highlightElem(zxnDmaHtml.blockLength, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.blockLength);
-	}
-	if (prevZxnDmaState.portAstartAddress !== zxnDMA.portAstartAddress) {
-		zxnDmaHtml.portAstartAddress.innerHTML = "0x" + zxnDMA.portAstartAddress.toString(16).toUpperCase().padStart(4, '0');
-		highlightElem(zxnDmaHtml.portAstartAddress, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portAstartAddress);
-	}
-	if (prevZxnDmaState.transferDirectionPortAtoB !== zxnDMA.transferDirectionPortAtoB) {
-		zxnDmaHtml.transferDirectionPortAtoB.innerHTML = zxnDMA.transferDirectionPortAtoB ? '=>' : '<=';
-		highlightElem(zxnDmaHtml.transferDirectionPortAtoB, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.transferDirectionPortAtoB);
-	}
-	if (prevZxnDmaState.portBstartAddress !== zxnDMA.portBstartAddress) {
-		zxnDmaHtml.portBstartAddress.innerHTML = "0x" + zxnDMA.portBstartAddress.toString(16).toUpperCase().padStart(4, '0');
-		highlightElem(zxnDmaHtml.portBstartAddress, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portBstartAddress);
-	}
-	if (prevZxnDmaState.portAaddressCounterRR34 !== zxnDMA.portAaddressCounterRR34) {
-		zxnDmaHtml.portAaddressCounter.innerHTML = "0x" + zxnDMA.portAaddressCounterRR34.toString(16).toUpperCase().padStart(4, '0');
-		highlightElem(zxnDmaHtml.portAaddressCounter, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portAaddressCounter);
-	}
-	if (prevZxnDmaState.portBaddressCounterRR56 !== zxnDMA.portBaddressCounterRR56) {
-		zxnDmaHtml.portBaddressCounter.innerHTML = "0x" + zxnDMA.portBaddressCounterRR56.toString(16).toUpperCase().padStart(4, '0');
-		highlightElem(zxnDmaHtml.portBaddressCounter, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portBaddressCounter);
-	}
-	if (prevZxnDmaState.blockCounterRR12 !== zxnDMA.blockCounterRR12) {
-		zxnDmaHtml.blockCounter.innerHTML = "0x" + zxnDMA.blockCounterRR12.toString(16).toUpperCase().padStart(4, '0');
-		highlightElem(zxnDmaHtml.blockCounter, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.blockCounter);
-	}
-	if (prevZxnDmaState.portAmode !== zxnDMA.portAmode) {
-		zxnDmaHtml.portAmode.innerHTML = zxnDMA.portAmode;
-		highlightElem(zxnDmaHtml.portAmode, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portAmode);
-	}
-	if (prevZxnDmaState.portBmode !== zxnDMA.portBmode) {
-		zxnDmaHtml.portBmode.innerHTML = zxnDMA.portBmode;
-		highlightElem(zxnDmaHtml.portBmode, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portBmode);
-	}
-	if (prevZxnDmaState.portAadd !== zxnDMA.portAadd) {
-		zxnDmaHtml.portAadd.innerHTML = zxnDMA.portAadd;
-		highlightElem(zxnDmaHtml.portAadd, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portAadd);
-	}
-	if (prevZxnDmaState.portBadd !== zxnDMA.portBadd) {
-		zxnDmaHtml.portBadd.innerHTML = zxnDMA.portBadd;
-		highlightElem(zxnDmaHtml.portBadd, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portBadd);
-	}
-	if (prevZxnDmaState.portAcycleLength !== zxnDMA.portAcycleLength) {
-		zxnDmaHtml.portAcycleLength.innerHTML = zxnDMA.portAcycleLength;
-		highlightElem(zxnDmaHtml.portAcycleLength, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portAcycleLength);
-	}
-	if (prevZxnDmaState.portBcycleLength !== zxnDMA.portBcycleLength) {
-		zxnDmaHtml.portBcycleLength.innerHTML = zxnDMA.portBcycleLength
-		highlightElem(zxnDmaHtml.portBcycleLength, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.portBcycleLength);
-	}
-	if (prevZxnDmaState.zxnPrescalar !== zxnDMA.zxnPrescalar) {
-		zxnDmaHtml.zxnPrescalar.innerHTML = zxnDMA.zxnPrescalar;
-		highlightElem(zxnDmaHtml.zxnPrescalar, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.zxnPrescalar);
-	}
-	if (prevZxnDmaState.mode !== zxnDMA.mode) {
-		zxnDmaHtml.mode.innerHTML = zxnDMA.mode;
-		highlightElem(zxnDmaHtml.mode, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.mode);
-	}
-	if (prevZxnDmaState.eobAction !== zxnDMA.eobAction) {
-		zxnDmaHtml.eobAction.innerHTML = zxnDMA.eobAction;
-		highlightElem(zxnDmaHtml.eobAction, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.eobAction);
-	}
-	if (prevZxnDmaState.readMask !== zxnDMA.readMask) {
-		zxnDmaHtml.readMask.digitvalue = zxnDMA.readMask;
-	}
-	if (prevZxnDmaState.lastReadSequenceBit !== zxnDMA.lastReadSequenceBit) {
-		zxnDmaHtml.readMask.bytevalue = zxnDMA.lastReadSequenceBit;
-	}
-	if (prevZxnDmaState.statusByteRR0 !== zxnDMA.statusByteRR0) {
-		zxnDmaHtml.statusByte.digitvalue = zxnDMA.statusByteRR0;
-	}
-	if (prevZxnDmaState.lastOperation !== zxnDMA.lastOperation) {
-		zxnDmaHtml.lastOperation.innerHTML = zxnDMA.lastOperation;
-		highlightElem(zxnDmaHtml.lastOperation, true);
-		prevZxnDmaHighlightedElements.push(zxnDmaHtml.lastOperation);
-	}
-	// Remember previous state
-	prevZxnDmaState = zxnDMA;
-}
-
 
 // Toggle the cell.
 globalThis.cellClicked = function (cell) {
@@ -466,44 +296,7 @@ function keySelect(e, on) {
 		case "Backspace": mappedKeys = ['Shift_Caps', 'Digit0']; break;
 	}
 
-	// Map real keyboard keys to ZX81/ZX Spectrum keys
-	if (zxKeyboardType === 'spectrum') {
-		switch (e.key) {
-			case 'Escape': mappedKeys = ['Period_Symbol', 'Shift_Caps']; break;
-			case '!': mappedKeys = ['Period_Symbol', 'Digit1']; break;
-			/*case '@': mappedKeys = ['Period_Symbol', 'Digit2']; break; Interferes with SymbShift/L */
-			case '#': mappedKeys = ['Period_Symbol', 'Digit3']; break;
-			case '$': mappedKeys = ['Period_Symbol', 'Digit4']; break;
-			case '%': mappedKeys = ['Period_Symbol', 'Digit5']; break;
-			case '&': mappedKeys = ['Period_Symbol', 'Digit6']; break;
-			case "´":
-			case "'": mappedKeys = ['Period_Symbol', 'Digit7']; break;
-			case '(': mappedKeys = ['Period_Symbol', 'Digit8']; break;
-			case ')': mappedKeys = ['Period_Symbol', 'Digit9']; break;
-			case '_': mappedKeys = ['Period_Symbol', 'Digit0']; break;
-			case '<': mappedKeys = ['Period_Symbol', 'KeyR']; break;
-			case '>': mappedKeys = ['Period_Symbol', 'KeyT']; break;
-			case ';': mappedKeys = ['Period_Symbol', 'KeyO']; break;
-			case '"': mappedKeys = ['Period_Symbol', 'KeyP']; break;
-			case '-': mappedKeys = ['Period_Symbol', 'KeyJ']; break;
-			case '+': mappedKeys = ['Period_Symbol', 'KeyK']; break;
-			case '=': mappedKeys = ['Period_Symbol', 'KeyL']; break;
-			case ':': mappedKeys = ['Period_Symbol', 'KeyZ']; break;
-			case '?': mappedKeys = ['Period_Symbol', 'KeyC']; break;
-			case '/': mappedKeys = ['Period_Symbol', 'KeyV']; break;
-			case '*': mappedKeys = ['Period_Symbol', 'KeyB']; break;
-			case ',': mappedKeys = ['Period_Symbol', 'KeyN']; break;
-			case '.': mappedKeys = ['Period_Symbol', 'KeyM']; break;
-			default: // Otherwise check key code
-				switch (e.code) {
-					// Convert Left ALT to CapsShift
-					case 'AltLeft': mappedKeys = ['Shift_Caps']; break;
-					// Convert Right Alt to SymbolShift
-					case 'AltRight': mappedKeys = ['Period_Symbol']; break;
-				}
-		}
-	}
-	else if (zxKeyboardType === 'zx81') {
+	if (zxKeyboard) {
 		switch (e.key) {
 			case '$': mappedKeys = ['Shift_Caps', 'KeyU']; break;
 			case '(': mappedKeys = ['Shift_Caps', 'KeyI']; break;

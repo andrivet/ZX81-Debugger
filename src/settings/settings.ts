@@ -245,15 +245,9 @@ export interface UlaOptions {
 
 /// Definitions for the 'zsim' remote type.
 export interface ZSimType {
-	// Defines a preset of settings to simulate a ZX Spectrum or ZX81.
-	// I.e. for a Spectrum it defines zxKeyboard, zxInterface2Joy, visualMemory, 48K, ulaScreen, zxBeeper, cpuFrequency, defaultPortIn.
-	// For a ZX81 it defines zxKeyboard, visualMemory, 16K, ulaScreen, cpuFrequency, defaultPortIn.
-	// All settings can be overwritten if explicitly set.
-	preset: 'spectrum' | 'zx81' | 'none';
 
-	// If enabled the simulator shows a ZX Spectrum/ZX81 keyboard to simulate keypresses.
-	zxKeyboard: 'spectrum' | 'zx81' | 'none';
-
+	// If enabled the simulator shows a ZX81 keyboard to simulate keypresses.
+	zxKeyboard: boolean,
 	// If enabled the simulator shows a pad to simulate the joysticks for interface 2.
 	zxInterface2Joy: boolean,
 
@@ -267,11 +261,10 @@ export interface ZSimType {
 
 	// If enabled the simulator shows the access to the memory (0-0xFFFF) visually while the program is running.
 	visualMemory: boolean,
-
+	
 	// If enabled it shows the contents of the ZX81 screen.
-	ulaScreen: 'zx81' | 'none',
-
-	// Options for the zx81 screen.
+	ulaScreen: boolean,
+	// Options for the zx81 screen. d
 	ulaOptions: UlaOptions;
 
 	// Enables overriding the load (save) routine of the ZX81 ROM.
@@ -388,7 +381,7 @@ export interface SettingsParameters extends DebugProtocol.LaunchRequestArguments
 	/// label or address which is above the topmost entry on the stack. It is used to determine the end of the call stack.
 	topOfStack: string;
 
-	/// label or address to use as start address for program execution if no .sna
+	/// label or address to use as start address for program execution
 	/// file is loaded.
 	execAddress: string;
 
@@ -558,37 +551,28 @@ export class Settings {
 		// zsim
 		if (!launchCfg.zsim)
 			launchCfg.zsim = {} as ZSimType;
-		const preset = launchCfg.zsim.preset;
-		if (preset === undefined) {
-			launchCfg.zsim.preset = 'none';
-		}
-		else {
-			// ZX81
-			if (preset === 'zx81') {
-				if (launchCfg.zsim.zxKeyboard === undefined)
-					launchCfg.zsim.zxKeyboard = 'zx81';
-				if (launchCfg.zsim.memoryModel === undefined)
-					launchCfg.zsim.memoryModel = "ZX81-56K";
-				if (launchCfg.zsim.visualMemory === undefined)
-					launchCfg.zsim.visualMemory = true;
-				if (launchCfg.zsim.ulaScreen === undefined)
-					launchCfg.zsim.ulaScreen = 'zx81';
-				if (launchCfg.zsim.zx81LoadOverlay === undefined)
-					launchCfg.zsim.zx81LoadOverlay = true;
-				if (launchCfg.zsim.cpuFrequency === undefined)
-					launchCfg.zsim.cpuFrequency = 3250000.0;	// 3.25Mhz
-				if (launchCfg.zsim.defaultPortIn === undefined)
-					launchCfg.zsim.defaultPortIn = 0xFF;
-				if (launchCfg.zsim.ulaOptions === undefined) {
-					launchCfg.zsim.ulaOptions = {} as UlaOptions;
-				}
-				if (launchCfg.zsim.ulaOptions.chroma81 === undefined) {
-					launchCfg.zsim.ulaOptions.chroma81 = {} as Chroma81Type;
-				}
-			}
-		}
+		// ZX81
 		if (launchCfg.zsim.zxKeyboard === undefined)
-			launchCfg.zsim.zxKeyboard = 'spectrum';
+			launchCfg.zsim.zxKeyboard = true;
+		if (launchCfg.zsim.memoryModel === undefined)
+			launchCfg.zsim.memoryModel = "ZX81-16K";
+		if (launchCfg.zsim.visualMemory === undefined)
+			launchCfg.zsim.visualMemory = true;
+		if (launchCfg.zsim.ulaScreen === undefined)
+			launchCfg.zsim.ulaScreen = true;
+		if (launchCfg.zsim.zx81LoadOverlay === undefined)
+			launchCfg.zsim.zx81LoadOverlay = true;
+		if (launchCfg.zsim.cpuFrequency === undefined)
+			launchCfg.zsim.cpuFrequency = 3250000.0;	// 3.25Mhz
+		if (launchCfg.zsim.defaultPortIn === undefined)
+			launchCfg.zsim.defaultPortIn = 0xFF;
+		if (launchCfg.zsim.ulaOptions === undefined) {
+			launchCfg.zsim.ulaOptions = {} as UlaOptions;
+		}
+		if (launchCfg.zsim.ulaOptions.chroma81 === undefined) {
+			launchCfg.zsim.ulaOptions.chroma81 = {} as Chroma81Type;
+		}
+
 		if (launchCfg.zsim.zxInterface2Joy === undefined)
 			launchCfg.zsim.zxInterface2Joy = false;
 		if (launchCfg.zsim.kempstonJoy === undefined)
@@ -607,10 +591,8 @@ export class Settings {
 					button.lowActive = true;
 			}
 		}
-		if (launchCfg.zsim.ulaScreen === undefined || launchCfg.zsim.ulaScreen as any === false)
-			launchCfg.zsim.ulaScreen = 'none';
-		else if (launchCfg.zsim.ulaScreen as any === true) // Old config
-			launchCfg.zsim.ulaScreen = 'zx81';
+		if (launchCfg.zsim.ulaScreen === undefined)
+			launchCfg.zsim.ulaScreen = true;
 		if (launchCfg.zsim.ulaOptions === undefined) {
 			launchCfg.zsim.ulaOptions = {
 			} as UlaOptions;
@@ -633,7 +615,7 @@ export class Settings {
 		if (ulaOptions.screenArea === undefined)
 			ulaOptions.screenArea = {} as ScreenAreaType;
 		const screenArea = ulaOptions.screenArea;
-		if (ulaScreen === 'zx81') {
+		if (ulaScreen) {
 			if (screenArea.firstX === undefined)
 				screenArea.firstX = 64;
 			if (screenArea.lastX === undefined)
@@ -1157,17 +1139,7 @@ export class Settings {
 			throw Error("'defaultPortIn': Allowed values are only 255 or 0.");
 		}
 
-		// Check preset
-		const preset = Settings.launch.zsim.preset;
-		if (preset !== 'spectrum' && preset !== 'zx81' && preset !== 'none') {
-			throw Error("'preset': Allowed values are 'spectrum', 'zx81' or 'none'.");
-		}
-
 		// Check ula screen
-		const ulaScreen = Settings.launch.zsim.ulaScreen;
-		if (ulaScreen !== 'zx81' && ulaScreen !== 'none') {
-			throw Error("'ulaScreen': Allowed values are 'spectrum' or 'zx81'.");
-		}
 		const ulaOptions = Settings.launch.zsim.ulaOptions;
 		const screenArea = ulaOptions.screenArea;
 		const borderSize = ulaOptions.borderSize;

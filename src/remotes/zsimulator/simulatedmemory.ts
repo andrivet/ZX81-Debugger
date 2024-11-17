@@ -578,7 +578,7 @@ export class SimulatedMemory implements Serializable {
 
 
 	/** Write to memoryData directly into a bank.
-	 * Is e.g. used during SNA / NEX file loading.
+	 * Is e.g. used during .P file loading.
 	 * @param bankNr The bank to write.
 	 * @param bankOffset Offset into the bank buffer.
 	 * @param data The data to write.

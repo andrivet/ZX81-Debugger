@@ -1354,7 +1354,7 @@ export class ZesaruxRemote extends RemoteBase {
 
 
 	/**
-	 * Loads sna, nex or tap file.
+	 * Loads .P file.
 	 * @param path The (absolute) path to the file.
 	 */
 	public async loadBin(path: string): Promise<void> {

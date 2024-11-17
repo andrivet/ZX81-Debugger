@@ -354,7 +354,6 @@ export class Zx81UlaScreen extends UlaScreen {
 		// Check for available VSYNC
 		if (this.noDisplay)
 			return {
-				name: 'zx81',
 				borderColor: this.borderColor
 			};
 
@@ -399,7 +398,6 @@ export class Zx81UlaScreen extends UlaScreen {
 		*/
 
 		return {
-			name: 'zx81',
 			dfile,
 			charset,
 			chroma,

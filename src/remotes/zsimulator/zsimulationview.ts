@@ -3,7 +3,6 @@ import {BaseView} from '../../views/baseview';
 import {ZSimRemote} from './zsimremote';
 import {Utility} from '../../misc/utility';
 import {LogZsimCustomCode} from '../../log';
-import {GlobalStorage} from '../../globalstorage';
 import {readFileSync} from 'fs';
 import {DiagnosticsHandler} from '../../diagnosticshandler';
 import {Z80Registers} from '../z80registers';
@@ -11,7 +10,7 @@ import {Z80Registers} from '../z80registers';
 
 /**
  * A Webview that shows the simulated peripherals.
- * E.g. in case of the Spectrum the ULA screen or the keyboard.
+ * E.g. the ULA screen or the keyboard.
  */
 export class ZSimulationView extends BaseView {
 	// The max. number of message in the queue. If reached the ZSimulationView will ask
@@ -50,7 +49,6 @@ export class ZSimulationView extends BaseView {
 
 	// Set by the display timer: the next time an update will happen.
 	protected nextUpdateTime: number;
-
 
 	// Stores the last T-states value.
 	// Used to check for changes.
@@ -246,9 +244,6 @@ export class ZSimulationView extends BaseView {
 				break;
 			case 'portBit':
 				this.setPortBit(message.value.port, message.value.on, message.value.bitByte);
-				break;
-			case 'volumeChanged':
-				GlobalStorage.Set('audio.volume', message.value);
 				break;
 			case 'sendToCustomLogic': {
 				// Unwrap message
@@ -495,7 +490,7 @@ export class ZSimulationView extends BaseView {
 		this.restartStopTimer();
 
 		try {
-			let cpuFreq, cpuLoad, simulationTooSlow, slots, slotNames, visualMem, audio, zxnDMA;
+			let cpuFreq, cpuLoad, simulationTooSlow, slots, slotNames, visualMem;
 
 			// Update frequency
 			if (this.prevCpuFreq !== this.simulator.z80Cpu.cpuFreq) {
@@ -526,9 +521,7 @@ export class ZSimulationView extends BaseView {
 				cpuLoad,
 				simulationTooSlow,
 				slotNames,
-				visualMem,
-				audio,
-				zxnDMA
+				visualMem
 			};
 			this.sendMessageToWebView(message);
 			// Clear
@@ -568,36 +561,21 @@ export class ZSimulationView extends BaseView {
 		const vscodeResPath = this.vscodePanel.webview.asWebviewUri(resourcePath).toString();
 		// Set keyboard values
 		const zsim = this.simulator.zsim;
-		// Predefine with spectrum keyboard
-		let zxKeybImg = "48k_kbd.svg";
-		let zxKeybAspectRatio = 1378/538;
-		let zxKeybKeyWidth = 7.4;
-		let zxKeybKeyHeight = 15;
-		let zxKeybKeyMarginRight = 1.8;
-		let zxKeybOffY = 9.5;
-		let zxKeybRowVertMargin = 10.5;
-		let zxKeybRow1OffsX = 1.3;
-		let zxKeybRow2OffsX = 6;
-		let zxKeybRow3OffsX = 8.7;
-		let zxKeybRow4OffsX = 2;
-		let zxKeybShiftStyle = 'style="width: 9.6%"';
-		let zxKeybSpaceStyle = 'style="width: 11.8%;margin-right: 0"';
-		// Redefine for ZX81
-		if (zsim.zxKeyboard === "zx81") {
-			zxKeybImg = "zx81_kbd.svg";
-			zxKeybAspectRatio = 512 / 186;
-			zxKeybKeyWidth = 7.975;
-			zxKeybKeyHeight = 17;
-			zxKeybKeyMarginRight = 1.125;
-			zxKeybOffY = 1.6;
-			zxKeybRowVertMargin = 7.85;
-			zxKeybRow1OffsX = 0.775;
-			zxKeybRow2OffsX = 5.75;
-			zxKeybRow3OffsX = 8.4;
-			zxKeybRow4OffsX = 3.6;
-			zxKeybShiftStyle = '';
-			zxKeybSpaceStyle = '';
-		}
+		// Predefine with ZX81 keyboard
+		const zxKeybImg = "zx81_kbd.svg";
+		const zxKeybAspectRatio = 512 / 186;
+		const zxKeybKeyWidth = 8.1;
+		const zxKeybKeyHeight = 17;
+		const zxKeybKeyMarginRight = 1.125;
+		const zxKeybOffY = 1.6;
+		const zxKeybRowVertMargin = 7.85;
+		const zxKeybRow1OffsX = 0.775;
+		const zxKeybRow2OffsX = 5.75;
+		const zxKeybRow3OffsX = 8.4;
+		const zxKeybRow4OffsX = 3.6;
+		const zxKeybShiftStyle = '';
+		const zxKeybSpaceStyle = '';
+
 		let html = `
 			<head>
 				<meta charset="utf-8">
@@ -808,7 +786,7 @@ export class ZSimulationView extends BaseView {
 		}
 
 
-		// Add code for the screen (Spectrum or ZX81)
+		// Add code for the screen (ZX81)
 		if (zsim.ulaScreen) {
 			// HTML code. Note: the canvas width and hide is just very preliminary.
 			// It will be set by the UlaDraw classes.
@@ -821,7 +799,7 @@ export class ZSimulationView extends BaseView {
 
 
 		// Add code for the keyboard
-		if (zsim.zxKeyboard !== 'none') {
+		if (zsim.zxKeyboard) {
 			html += `
 			<!-- Keyboard -->
 			<details open="true">
@@ -876,9 +854,9 @@ export class ZSimulationView extends BaseView {
 					<span id="key_KeyM" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_Period_Symbol" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_Space" class="key" onClick="cellClicked(this)" ${zxKeybSpaceStyle}></span>
-			</div>
-		</details>
-		`;
+				</div>
+			</details>
+			`;
 		}
 
 		// Add code for the Interface 2 joysticks
@@ -1117,15 +1095,8 @@ export class ZSimulationView extends BaseView {
 	protected sendInit() {
 		const zsim = this.simulator.zsim;
 		// Is sent only once, just after the webview initially loads.
-		let volume = GlobalStorage.Get<number>('audio.volume');
-		if (volume === undefined)
-			volume = 0.75;
 		const sendMsg = {
 			command: 'init',
-			audioSampleRate: 0,
-			zxKeyboard: zsim.zxKeyboard,
-			volume,
-			ulaScreen: zsim.ulaScreen,
 			ulaOptions: zsim.ulaOptions
 		};
 		this.sendMessageToWebView(sendMsg);

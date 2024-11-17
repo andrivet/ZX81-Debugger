@@ -192,7 +192,7 @@ suite('Settings', () => {
 			const cfg: any = {
 				remoteType: 'zrcp',
 				rootFolder: './tests/data',
-				load: "./settings/filenotexists.sna"
+				load: "./settings/filenotexists.P"
 			};
 
 			// File does not exist -> Exception
@@ -207,7 +207,7 @@ suite('Settings', () => {
 			const cfg: any = {
 				remoteType: 'zrcp',
 				rootFolder: './tests/data',
-				load: "./settings/file.sna"
+				load: "./settings/file.P"
 			};
 
 			// File does exist -> No exception
@@ -222,7 +222,7 @@ suite('Settings', () => {
 			const cfg: any = {
 				remoteType: 'zrcp',
 				rootFolder: './tests/data',
-				load: "./settings/file.sna",
+				load: "./settings/file.P",
 				execAddress: "1234"
 			};
 

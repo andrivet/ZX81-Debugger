@@ -447,23 +447,10 @@
 								"description": "'The configuration of the internal Z80 simulator.",
 								"type": "object",
 								"properties": {
-									"preset": {
-										"type": "string",
-										"enum": [
-											"spectrum",
-											"zx81"
-										],
-										"description": "The preset of the simulator. It will set the default values for a 56k Spectrum. You can override these settings. If you e.g. set the 'memoryModel' explicitly.",
-										"default": "spectrum"
-									},
 									"zxKeyboard": {
-										"type": "string",
-										"enum": [
-											"spectrum",
-											"zx81"
-										],
-										"description": "Select a keyboard. ZX81 or ZX Spectrum.",
-										"default": "spectrum"
+										"type": "boolean",
+										"description": "If true, displayes the ZX81 keyboard.",
+										"default": "true"
 									},
 									"zxInterface2Joy": {
 										"type": "boolean",
@@ -546,20 +533,15 @@
 										"type": "string",
 										"enum": [
 											"RAM",
-											"ZX16K",
-											"ZX48K",
-											"ZX128K",
-											"ZXNEXT",
 											"ZX81-1K",
 											"ZX81-2K",
 											"ZX81-16K",
 											"ZX81-32K",
 											"ZX81-48K",
 											"ZX81-56K",
-											"ColecoVision",
 											"CUSTOM"
 										],
-										"description": "Chooses the right memory model. I.e. how the memory maps to ROM and RAM and if and how paging is done.\nA few examples:\n- 'RAM': One memory area of 64K, 1 bank.\n- 'ZX16K': ROM and RAM as of the ZX Spectrum 16K, 1 ROM, 1 RAM bank.\n- 'ZX48K': ROM and RAM as of the ZX Spectrum 48K, 1 ROM, 1 RAM bank.\n- 'ZX128K': Banked memory, 16k slots, 8 RAM banks, 2 ROM banks .\n- 'ZXNEXT': Banked memory as of the ZX Next (8k slots/banks).\n- 'ZX81-16K': ROM and RAM as of a 16k ZX81.\n- 'CUSTOM': A customizable memory model. You define the memory in the 'customMemory' property.",
+										"description": "Chooses the right memory model. I.e. how the memory maps to ROM and RAM and if and how paging is done.\nA few examples:\n- 'RAM': One memory area of 64K, 1 bank.\n- 'ZX81-16K': ROM and RAM as of a 16k ZX81.\n- 'CUSTOM': A customizable memory model. You define the memory in the 'customMemory' property.",
 										"default": "RAM"
 									},
 									"customMemory": {
@@ -665,13 +647,9 @@
 										}
 									},
 									"ulaScreen": {
-										"type": "string",
-										"enum": [
-											"spectrum",
-											"zx81"
-										],
-										"description": "If defined it shows the contents of the ZX Spectrum (\"spectrum\") or ZX81 (\"zx81\") screen. It supports also the ZX128K screen switching.",
-										"default": null
+										"type": "boolean",
+										"description": "If true it shows the contents of the ZX81 (\"zx81\") screen.",
+										"default": true
 									},
 									"ulaOptions": {
 										"type": "object",
@@ -757,18 +735,8 @@
 												"default": false
 											}
 										},
-										"description": "Several options for the ZX81 and ZX Spectrum ULA screen.",
+										"description": "Several options for the ZX81 ULA screen.",
 										"default": {}
-									},
-									"zxBeeper": {
-										"type": "boolean",
-										"description": "Enables ZX Spectrum sound through it's beeper.",
-										"default": true
-									},
-									"audioSampleRate": {
-										"type": "number",
-										"description": "The sample rate used for audio. Defaults to 22050 Hz.",
-										"default": 22050
 									},
 									"cpuLoad": {
 										"type": "number",
@@ -1030,7 +998,7 @@
 							},
 							"execAddress": {
 								"type": "string",
-								"description": "The start address of program execution. Use a label or a number. Can only be omitted if a .sna or .nex file is loaded."
+								"description": "The start address of program execution. Use a label or a number."
 							},
 							"source": {
 								"type": "string",
@@ -1208,12 +1176,11 @@
 					{
 						"type": "zx81debugger",
 						"request": "launch",
-						"name": "Simulator - ZX81 56k RAM",
+						"name": "Simulator - ZX81 16k RAM",
 						"remoteType": "zsim",
 						"zsim": {
 							"visualMemory": true,
-							"preset": "zx81",
-							"memoryModel": "ZX81-56K"
+							"memoryModel": "ZX81-16K"
 						},
 						"commandsAfterLaunch": [],
 						"history": {
@@ -1232,12 +1199,11 @@
 						"body": {
 							"type": "zx81debugger",
 							"request": "launch",
-							"name": "Simulator - ZX81 56k RAM",
+							"name": "Simulator - ZX81 16k RAM",
 							"remoteType": "zsim",
 							"zsim": {
 								"visualMemory": true,
-								"preset": "zx81",
-								"memoryModel": "ZX81-56K"
+								"memoryModel": "ZX81-16K"
 							},
 							"commandsAfterLaunch": [],
 							"history": {
