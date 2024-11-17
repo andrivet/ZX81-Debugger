@@ -2,7 +2,7 @@
 
 ## 2.0.0 - November 2024
 
-* Fork from latest version of Dezog (1.3.5)
+* Fork from latest version of Dezog (3.5.0)
 
 
 ## 1.3.1 - June 28, 2023

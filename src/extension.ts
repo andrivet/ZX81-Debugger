@@ -6,12 +6,10 @@ import {DebugSessionClass} from './debugadapter';
 import {Decoration, DecorationClass} from './decoration';
 import {DiagnosticsHandler} from './diagnosticshandler';
 import {GlobalStorage} from './globalstorage';
-import {HelpProvider} from './help/helpprovider';
 import {LogGlobal, LogZsimHardware, LogZsimCustomCode, LogTransport} from './log';
 import { UnifiedPath } from './misc/unifiedpath';
 import {Utility} from './misc/utility';
 import {PackageInfo} from './whatsnew/packageinfo';
-import {WhatsNewView} from './whatsnew/whatsnewview';
 import {Z80UnitTestRunner} from './z80unittests/z80unittestrunner';
 import {Run} from './run';
 
@@ -41,25 +39,6 @@ export function activate(context: vscode.ExtensionContext) {
 	const extPath = context.extensionPath;
 	// it is also stored here as Utility does not include vscode which is more unit-test-friendly.
 	Utility.setExtensionPath(extPath);
-
-	// Check version and show 'What's new' if necessary.
-	const mjrMnrChanged = WhatsNewView.updateVersion(context);
-	if (mjrMnrChanged) {
-		// Major or minor version changed so show the whatsnew page.
-		new WhatsNewView();	// NOSONAR
-	}
-	// Register the additional command to view the "Whats' New" page.
-	context.subscriptions.push(vscode.commands.registerCommand("zx81debugger.whatsNew", () => new WhatsNewView()));
-
-
-	// Register the 'Help' webview
-	const helpProvider = new HelpProvider();
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider("zx81debugger.helpview", helpProvider, {webviewOptions: {retainContextWhenHidden: false}})
-	);
-
-	// Command to show the DeZog Help
-	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.help', () => helpProvider.createHelpView()));
 
 	// Command to show the available serial ports
 	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.serialport.list', async () => {

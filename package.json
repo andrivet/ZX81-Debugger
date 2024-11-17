@@ -30,9 +30,6 @@
 		"type": "git",
 		"url": "https://github.com/andrivet/ZX81-Debugger"
 	},
-	"sponsor": {
-		"url": "https://github.com/sponsors/maziac"
-	},
 	"files": [],
 	"scripts": {
 		"compile": "tsc -p ./",
@@ -86,28 +83,10 @@
 		"onStartupFinished"
 	],
 	"contributes": {
-		"views": {
-			"debug": [
-				{
-					"type": "webview",
-					"id": "zx81debugger.helpview",
-					"name": "ZX81 Debugger Help",
-					"icon": "assets/help_icon.svg",
-					"contextualTitle": "ZX81 Debugger Help",
-					"when": "config.zx81debugger.showHelp"
-				}
-			]
-		},
 		"configuration": {
 			"type": "object",
 			"title": "ZX81 Debugger Configuration",
 			"properties": {
-				"zx81debugger.showHelp": {
-					"description": "Enables the 'ZX81 Debugger Help' view in the debug sidebar.",
-					"type": "boolean",
-					"scope": "resource",
-					"default": true
-				},
 				"zx81debugger.log.global": {
 					"description": "Write global logs to an output panel.",
 					"type": "boolean",
@@ -152,16 +131,6 @@
 			}
 		],
 		"commands": [
-			{
-				"command": "zx81debugger.whatsNew",
-				"title": "Show 'What's New' page of this ZX81 Debugger release.",
-				"category": "ZX81 Debugger"
-			},
-			{
-				"command": "zx81debugger.help",
-				"title": "Show the ZX81 Debugger Help page.",
-				"category": "ZX81 Debugger"
-			},
 			{
 				"command": "zx81debugger.movePCtoCursor",
 				"title": "Move Program Counter to Cursor",
@@ -243,12 +212,6 @@
 		],
 		"menus": {
 			"commandPalette": [
-				{
-					"command": "zx81debugger.whatsNew"
-				},
-				{
-					"command": "zx81debugger.help"
-				},
 				{
 					"command": "zx81debugger.movePCtoCursor",
 					"when": "false"

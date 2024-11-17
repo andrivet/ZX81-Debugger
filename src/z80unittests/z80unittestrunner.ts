@@ -103,7 +103,7 @@ export class Z80UnitTestRunner {
 		this.testRunActive = false;
 		// Create test controller
 		this.testController = vscode.tests.createTestController(
-			'maziac.dezog.z80unittest.controller',
+			'andrivet.zx81debugger.z80unittest.controller',
 			'Z80 Unit Tests'
 		);
 		// For test case discovery

@@ -1,14 +1,3 @@
-/**
- * ZX81 Debugger
- * 
- * File:			shallowvar.ts
- * Description:		Represents a variable.
- * Author:			Sebastien Andrivet, based on Dezog my Thomas Busse (Maziac)
- * License:			GPLv3
- * Copyrights: 		ZX81 Debugger Copyright (C) 2023-2024 Sebastien Andrivet
- * 					DeZog Copyright (C) 2023 Maziac
- */
-
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { ShallowVar } from "./shallowvar";
 import { Remote } from "../remotes/remotebase";
