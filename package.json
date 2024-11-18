@@ -1141,41 +1141,21 @@
 						"request": "launch",
 						"name": "Simulator - ZX81 16k RAM",
 						"remoteType": "zsim",
-						"zsim": {
-							"visualMemory": true,
-							"memoryModel": "ZX81-16K"
-						},
-						"commandsAfterLaunch": [],
-						"history": {
-							"reverseDebugInstructionCount": 1000000,
-							"spotCount": 10,
-							"codeCoverageEnabled": true
-						},
 						"startAutomatically": false,
-						"rootFolder": "^\"\\${workspaceFolder\\}\""
+						"rootFolder": "${workspaceFolder}"
 					}
 				],
 				"configurationSnippets": [
 					{
 						"label": "ZX81 Debugger: Simulator - ZX81",
-						"description": "Configuration for ZX81 Debugger to use the internal simulator for a ZX81 with 56k RAM. Can be used to simulate a ZX81.",
+						"description": "Configuration for ZX81 Debugger to use the internal simulator for a ZX81 with 16k RAM. Can be used to simulate a ZX81.",
 						"body": {
 							"type": "zx81debugger",
 							"request": "launch",
 							"name": "Simulator - ZX81 16k RAM",
 							"remoteType": "zsim",
-							"zsim": {
-								"visualMemory": true,
-								"memoryModel": "ZX81-16K"
-							},
-							"commandsAfterLaunch": [],
-							"history": {
-								"reverseDebugInstructionCount": 1000000,
-								"spotCount": 10,
-								"codeCoverageEnabled": true
-							},
 							"startAutomatically": false,
-							"rootFolder": "^\"\\${workspaceFolder\\}\""
+							"rootFolder": "${workspaceFolder}"
 						}
 					}
 				]
