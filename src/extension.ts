@@ -5,7 +5,6 @@ import {CancellationToken, DebugConfiguration, ProviderResult, WorkspaceFolder} 
 import {DebugSessionClass} from './debugadapter';
 import {Decoration, DecorationClass} from './decoration';
 import {DiagnosticsHandler} from './diagnosticshandler';
-import {GlobalStorage} from './globalstorage';
 import {LogGlobal, LogZsimHardware, LogZsimCustomCode, LogTransport} from './log';
 import { UnifiedPath } from './misc/unifiedpath';
 import {Utility} from './misc/utility';
@@ -28,9 +27,6 @@ import {Run} from './run';
 export function activate(context: vscode.ExtensionContext) {
 	// Init package info
 	PackageInfo.Init(context);
-
-	// Init global storage
-	GlobalStorage.Init(context);
 
 	// Init/subscribe diagnostics
 	DiagnosticsHandler.Init(context);
