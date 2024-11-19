@@ -1085,6 +1085,16 @@ export class Settings {
 			}
 		}
 
+		// .zx81 files (source)
+		if (Settings.launch.source) {
+			// Check that file exists
+			if (!fs.existsSync(Settings.launch.source))
+				throw Error("'source': File '" + Settings.launch.source + "' does not exist.");
+			// You can't have both a source and a binary file
+			if (Settings.launch.load)
+				throw Error("'load': You can't have both \"source\" and \"load\". To load other binaries (memory dumps) use \"binaries\".");
+		}
+
 		// .P files (ZX81)
 		if (Settings.launch.load) {
 			// Check that file exists
@@ -1105,7 +1115,7 @@ export class Settings {
 			if (loadObj.start === undefined)
 				throw Error("'loadObj.start': You must specify a 'start' address for '" + path + "'.");
 		}
-
+		
 		// Rev-Eng: Check that glob pattern at least finds one file.
 		if(Settings.launch.revEng) {
 			// Check that file exists
