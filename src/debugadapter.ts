@@ -2022,7 +2022,7 @@ export class DebugSessionClass extends DebugSession {
 		else if (cmd === '-mvc') {
 			output = await MemoryCommands.evalMemViewColumns(tokens);
 		}
-		else if (cmd === '-zx81') {
+		else if (cmd === '-ula') {
 			output = await MemoryCommands.evalDisplayView();
 		}
 		else if (cmd === '-mvd') {
@@ -2422,7 +2422,7 @@ the value correspondents to a label.
 "-memmodel": Prints slot and bank info of the currently used memory model.
 "-ml address filepath": Loads a binary file into memory. The filepath is relative to the TMP directory.
 "-ms address size filename": Saves a memory dump to a file. The file is saved to the temp directory.
-"-zx81": Show the ZX81 simulator.
+"-ula": Show the simulator.
 "-msetb address value [repeat]":
 	- address: The address to fill. Can also be a label or expression.
 	- value: The byte value to set.
