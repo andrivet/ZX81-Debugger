@@ -1424,7 +1424,8 @@ hl: 0x${Utility.getHexString(resp.hl, 4)}`;
 		// Check if topOfStack is set
 		if (Settings.launch.topOfStack) {
 			// For p-files topOfStack is set automatically, send a warning
-			this.emit('warning', "'topOfStack' is set in the launch.json but ignored because for .p files 'topOfStack' is set automatically.");
+			// This is set, so remove the warning
+			//this.emit('warning', "'topOfStack' is set in the launch.json but ignored because for .p files 'topOfStack' is set automatically.");
 		}
 
 		// Find RAMTOP: Fill memory, read it back and check until which address it is correct.
