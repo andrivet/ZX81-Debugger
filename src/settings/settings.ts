@@ -557,7 +557,7 @@ export class Settings {
 		if (launchCfg.zsim.memoryModel === undefined)
 			launchCfg.zsim.memoryModel = "ZX81-16K";
 		if (launchCfg.zsim.visualMemory === undefined)
-			launchCfg.zsim.visualMemory = true;
+			launchCfg.zsim.visualMemory = false;
 		if (launchCfg.zsim.ulaScreen === undefined)
 			launchCfg.zsim.ulaScreen = true;
 		if (launchCfg.zsim.zx81LoadOverlay === undefined)
@@ -667,10 +667,6 @@ export class Settings {
 
 		if (launchCfg.zsim.cpuLoad === undefined)
 			launchCfg.zsim.cpuLoad = 10;
-		if (launchCfg.zsim.visualMemory === undefined)
-			launchCfg.zsim.visualMemory = true;
-		if (launchCfg.zsim.memoryModel === undefined)
-			launchCfg.zsim.memoryModel = "RAM";
 		launchCfg.zsim.memoryModel = launchCfg.zsim.memoryModel.toUpperCase();
 		if (launchCfg.zsim.cpuFrequency === undefined)
 			launchCfg.zsim.cpuFrequency = 3500000.0;	// 3500000.0 for 3.5MHz.

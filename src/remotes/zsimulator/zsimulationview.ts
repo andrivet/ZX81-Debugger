@@ -806,9 +806,6 @@ export class ZSimulationView extends BaseView {
 		if (zsim.zxKeyboard) {
 			html += `
 			<!-- Keyboard -->
-			<details open="true">
-			<summary>ZX Keyboard</summary>
-
 			<div class="keyboard" tabIndex="1">
 				<div style="height: ${zxKeybOffY}%"></div>
 					<span class="hor-space" style="width: ${zxKeybRow1OffsX}%"></span>
@@ -858,8 +855,7 @@ export class ZSimulationView extends BaseView {
 					<span id="key_KeyM" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_Period_Symbol" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_Space" class="key" onClick="cellClicked(this)" ${zxKeybSpaceStyle}></span>
-				</div>
-			</details>
+			</div>
 			`;
 		}
 
