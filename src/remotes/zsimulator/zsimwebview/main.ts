@@ -13,6 +13,9 @@ let cpuFreq: HTMLLabelElement
 // HTML element used for the cpu load.
 let cpuLoad: HTMLLabelElement
 
+// HTML element used for the keyboard
+let keyboard : HTMLElement | null;
+
 
 // For flow control.
 let countOfProcessedMessages = 0;
@@ -117,6 +120,8 @@ function initSimulation(message) {
 
 	// Store the cpu_load_id
 	cpuLoad = document.getElementById("cpu_load_id") as HTMLLabelElement;
+
+	keyboard = document.querySelector(".keyboard");
 
 	// Store the visual mem image source
 	const visualMemCanvas = document.getElementById("visual_mem_img_id") as HTMLCanvasElement;
@@ -346,6 +351,16 @@ function keydown(e) {
 document.addEventListener('keyup', keyup);
 function keyup(e) {
 	keySelect(e, false);
+}
+
+window.addEventListener('focus', focus);
+function focus() {
+	if(keyboard) keyboard.classList.add("focus");
+}
+
+window.addEventListener('blur', blur);
+function blur() {
+	if(keyboard) keyboard.classList.remove("focus");
 }
 
 // Handle initial load.

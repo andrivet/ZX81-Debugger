@@ -611,7 +611,7 @@ export class ZSimulationView extends BaseView {
 				border: 2px solid black;
 			}
 
-			.keyboard:focus {
+			.focus {
 				border-color: greenyellow;
 			}
 
@@ -646,7 +646,6 @@ export class ZSimulationView extends BaseView {
 			`;
 
 		// Setup the body
-		const visualMemoryZxScreen = zsim.memoryModel.includes('ZX') && (!zsim.memoryModel.includes('81'));
 		let jsCustomCode = '';
 		if (this.customUiPath) {
 			try {
@@ -717,15 +716,8 @@ export class ZSimulationView extends BaseView {
 				<label class="label-absolute-top" style="left:0%">0x0000</label>
 				<label style="position:absolute; top:2em; left:12.5%">0x2000</label>`;
 			// ZX screen memory marker
-			if (visualMemoryZxScreen) {
-				html += `
-				<label style="position:absolute; top:1.1em; left:25%">0x4000</label>
-				<label style="position:absolute; top:1.1em; left:35.5%">0x5B00</label>`;
-			}
-			else {
-				html += `
-				<label class="label-absolute-top" style="left:25%">0x4000</label>`;
-			}
+			html += `
+			<label class="label-absolute-top" style="left:25%">0x4000</label>`;
 
 			html += `
 			<label class="label-absolute-top" style="left:37.5%">0x6000</label>
@@ -737,18 +729,9 @@ export class ZSimulationView extends BaseView {
 			<!-- Marker ticks -->
 			<span class="border" style="top: 3em; left:0%; height: 1.7em"></span>
 			<span class="border" style="top: 3em; left:12.5%; height:1em;"></span>`;
-			if (visualMemoryZxScreen) {
-				// ZX screen memory marker
-				html += `
-				<span class="border" style="top: 2.0em; left:25%; height:2.5em;"></span>
-				<span class="border" style="top: 2.0em; left:34.4%; height:2.5em;"></span> <!-- 0x5800 -->
-				<span class="border" style="top: 2.0em; left:35.5%; height:2.5em;"></span> <!-- 0x5B00 -->`;
-			}
-			else {
-				// ZX screen memory marker
-				html += `
-				<span class="border" style="top: 3em; left:25%; height:1em;"></span>`;
-			}
+			// ZX screen memory marker
+			html += `
+			<span class="border" style="top: 3em; left:25%; height:1em;"></span>`;
 
 			html += `
 			<span class="border" style="top: 3em; left:37.5%; height:1em;"></span>
@@ -756,14 +739,8 @@ export class ZSimulationView extends BaseView {
 			<span class="border" style="top: 3em; left:62.5%; height:1em;"></span>
 			<span class="border" style="top: 3em; left:75%; height:1em;"></span>
 			<span class="border" style="top: 3em; left:87.5%; height:1em;"></span>
-		`;
-			if (visualMemoryZxScreen) {
-				// Markers for display
-				html += `
-				<!-- Extra "Screen" range display -->
-				<div class="border slot" style="top:2.2em; left:25%; width:9.4%;">SCREEN</div>
-				<div class="border slot" style="top:2.2em; left:34.4%; width:1.1%;"></div>`;
-			}
+			`;
+
 
 			html += `
 			<!-- Visual memory image, is mainly transparent and put on top -->
@@ -806,7 +783,7 @@ export class ZSimulationView extends BaseView {
 		if (zsim.zxKeyboard) {
 			html += `
 			<!-- Keyboard -->
-			<div class="keyboard" tabIndex="1">
+			<div class="keyboard">
 				<div style="height: ${zxKeybOffY}%"></div>
 					<span class="hor-space" style="width: ${zxKeybRow1OffsX}%"></span>
 					<span id="key_Digit1" class="key" onClick="cellClicked(this)"></span>
