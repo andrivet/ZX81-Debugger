@@ -261,6 +261,19 @@ export class RemoteBase extends EventEmitter {
 			Settings.launch.sjasmplus.push({path: sldPath, srcDirs: [UnifiedPath.dirname(Settings.launch.source)], excludeFiles: []});
 			// Load the binary into memory (this will also load the SLD)
 			await this.loadBin(binPath);
+
+			// Break on the first machine code
+			const ramBank = 1;
+			const bp: RemoteBreakpoint = {	
+				longAddress: 0x4082 + ((ramBank + 1) << 16), // Address of first machine code compiled
+				bpId: 0,
+				condition: '',
+				log: undefined,
+				lineNr: -1,
+				filePath: ''
+			};
+			this.setBreakpoint(bp);
+
 			return [];
 		}
 

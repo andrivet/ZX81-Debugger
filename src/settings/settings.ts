@@ -886,7 +886,7 @@ export class Settings {
 		if (launchCfg.disassemblerArgs.numberOfLines < 1)
 			launchCfg.disassemblerArgs.numberOfLines = 1;
 		if (launchCfg.startAutomatically === undefined)
-			launchCfg.startAutomatically = false;
+			launchCfg.startAutomatically = true;
 		if (launchCfg.commandsAfterLaunch === undefined)
 			launchCfg.commandsAfterLaunch = [];
 		if (launchCfg.zrcp.skipInterrupt === undefined)
