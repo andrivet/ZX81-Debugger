@@ -564,7 +564,7 @@ export class ZSimulationView extends BaseView {
 		// Predefine with ZX81 keyboard
 		const zxKeybImg = "zx81_kbd.svg";
 		const zxKeybAspectRatio = 512 / 186;
-		const zxKeybKeyWidth = 8.1;
+		const zxKeybKeyWidth = 7.975;
 		const zxKeybKeyHeight = 17;
 		const zxKeybKeyMarginRight = 1.125;
 		const zxKeybOffY = 1.6;
@@ -608,7 +608,11 @@ export class ZSimulationView extends BaseView {
 				font-size: 0; /* Removes space between 2 spans */
 				background-image: url('html/images/${zxKeybImg}');
 				background-size: cover;
-				/* border: 2px solid red; */
+				border: 2px solid black;
+			}
+
+			.keyboard:focus {
+				border-color: greenyellow;
 			}
 
 			.hor-space {
@@ -805,7 +809,7 @@ export class ZSimulationView extends BaseView {
 			<details open="true">
 			<summary>ZX Keyboard</summary>
 
-			<div class="keyboard">
+			<div class="keyboard" tabIndex="1">
 				<div style="height: ${zxKeybOffY}%"></div>
 					<span class="hor-space" style="width: ${zxKeybRow1OffsX}%"></span>
 					<span id="key_Digit1" class="key" onClick="cellClicked(this)"></span>
