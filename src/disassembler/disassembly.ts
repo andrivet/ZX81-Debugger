@@ -10,8 +10,8 @@ import {MemAttribute} from './core/memory';
 import {Remote} from '../remotes/remotebase';
 
 
-/// The filename used for the temporary disassembly. ('./.tmp/disasm.list')
-const TmpDasmFileName = 'disasm.list';
+/// The filename used for the temporary disassembly. ('./.tmp/disasm.zx81')
+const TmpDasmFileName = 'disasm.zx81';
 
 
 /**

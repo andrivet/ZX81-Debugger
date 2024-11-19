@@ -1,5 +1,4 @@
 import {AsmNode} from "./core/asmnode";
-import {Format} from "./core/format";
 import {RenderBase} from "./renderbase";
 import {RenderedLines} from "./renderedlines";
 import {SmartDisassembler} from "./smartdisassembler";
@@ -20,10 +19,9 @@ export const enum RenderHint {
  */
 export class RenderText extends RenderBase {
 
-	/// Column areas. E.g. area for the bytes shown before each command
-	public clmnsAddress = 5;		///< size for the address at the beginning of each line.
-	public clmnsBytes = 4 * 3 + 1;	///< 4* length of hex-byte
-
+	// Comments with address and bytes
+	public clmnsComments = 28;
+	
 	// The max. number of bytes to print in a data DEFB area per line.
 	public defbMaxBytesPerLine = 8;
 
@@ -143,8 +141,8 @@ export class RenderText extends RenderBase {
 	 * @returns A complete line, e.g. "C000.B1 LABEL1:"
 	 */
 	protected formatAddressLabel(addr64k: number, label: string): string {
-		const addrString = (this.disasm.funcFormatLongAddress(addr64k)).padEnd(this.clmnsAddress - 1) + ' ';
-		const s = this.emphasizeAddrBytes(addrString) + this.emphasizeLabel(label + ':');
+		const addrString = this.disasm.funcFormatLongAddress(addr64k);
+		const s = this.emphasizeLabel(label + ':').padEnd(this.clmnsComments - 1) + '; ' + addrString;
 		return s;
 	}
 
@@ -158,71 +156,41 @@ export class RenderText extends RenderBase {
 	 * @returns A complete line, e.g. "C000.B1 3E 05    LD A,5 ; Comment"
 	 */
 	protected formatAddressPlusText(addr64k: number, bytes: Uint8Array, text: string, comment?: string): string {
-		const addrString = this.disasm.funcFormatLongAddress(addr64k).padEnd(this.clmnsAddress - 1);
+		const addrString = this.disasm.funcFormatLongAddress(addr64k);
 		let bytesString = '';
 		bytes.forEach(value =>
 			bytesString += value.toString(16).toUpperCase().padStart(2, '0') + ' '
 		);
 		bytesString = bytesString.substring(0, bytesString.length - 1);
-		bytesString = Format.getLimitedString(bytesString, this.clmnsBytes - 2);
-		let s = this.emphasizeAddrBytes(addrString + ' ' + bytesString) + '  ' + this.emphasizeInstruction(text);
+		let s = '  ' + this.emphasizeInstruction(text);
+		s = s.padEnd(this.clmnsComments - 1) + '; ' + addrString + '  ' + bytesString;
 		if (comment)
 			s += ' ' + this.emphasizeComment('; ' + comment);
 		return s;
 	}
 
 
-	/**
-	 * Formats a series of bytes into a comment string.
+	/** Returns a line of byte data.
 	 * @param bytes The data to print.
-	 * @returns All hex data is converted to ASCII. Non-printable characters are displayed as '?'.
-	 * E.g. 'mystring'
-	 */
-	protected getDefbComment(bytes: Uint8Array): string {
-		let result = '';
-		for (const byte of bytes) {
-			// Check if printable ASCII
-			const printable = (byte >= 0x20) && (byte < 0x80);
-			// Add to string
-			if (printable) {
-				const c = String.fromCharCode(byte);
-				result += c;
-			}
-			else {
-				// Non-printable
-				result += '?'
-			}
-		}
-		// Return
-		return "ASCII: " + result;
-	}
-
-
-	/** Returns a line of DEFB data.
-	 * @param bytes The data to print.
-	 * @returns E.g. 'DEFB C0 AF 01'
+	 * @returns E.g. 'byte C0 AF 01'
 	 */
 	protected getDefbLine(bytes: Uint8Array) {
 		let bytesString = '';
 		bytes.forEach(value => {
 			bytesString += ' ' + value.toString(16).toUpperCase().padStart(2, '0');
 		});
-		return 'DEFB' + bytesString;
+		return 'byte' + bytesString;
 	}
 
 
 	/** Returns a complete line of data.
-	 * With address and comment.
 	 * @param addr64k The start address.
 	 * @param len The amount of bytes.
-	 * @returns E.g. '8000.1 C0 AF...  DEFB C0 AF 01 CE  ; ASCII: ????'
+	 * @returns E.g. '	C0 AF...  DEFB C0 AF 01 CE  ; ASCII: ????'
 	 */
 	protected getCompleteDataLine(addr64k: number, len: number) {
 		const bytes: Uint8Array = this.disasm.memory.getData(addr64k, len);
-		const text = this.emphasizeData(this.getDefbLine(bytes));
-		const comment = this.getDefbComment(bytes);
-		const line = this.formatAddressPlusText(addr64k, bytes, text, comment);
-		return line;
+		return '  ' + this.emphasizeData(this.getDefbLine(bytes));
 	}
 
 

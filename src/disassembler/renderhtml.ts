@@ -1,5 +1,4 @@
 import {AsmNode} from "./core/asmnode";
-import {Format} from "./core/format";
 import {RenderText} from "./rendertext";
 
 
@@ -163,13 +162,12 @@ export class RenderHtml extends RenderText {
 	 */
 	protected formatAddressPlusText(addr64k: number, bytes: Uint8Array, text: string, comment?: string): string {
 		const id = this.getHtmlId(addr64k);	// Not every ID/label would be required. However, every line gets one. It's easier than to distinguish which line requires one.
-		const addrString = this.disasm.funcFormatLongAddress(addr64k).padEnd(this.clmnsAddress - 1);
+		const addrString = this.disasm.funcFormatLongAddress(addr64k);
 		let bytesString = '';
 		bytes.forEach(value =>
 			bytesString += value.toString(16).toUpperCase().padStart(2, '0') + ' '
 		);
 		bytesString = bytesString.substring(0, bytesString.length - 1);
-		bytesString = Format.getLimitedString(bytesString, this.clmnsBytes - 2);
 		let s = this.emphasizeAddrBytes(addrString + ' ' + bytesString) + '  <span id="' + id + '">' + this.emphasizeInstruction(text) + '</span>';
 		if (comment)
 			s += ' ' + this.emphasizeComment('; ' + comment);
