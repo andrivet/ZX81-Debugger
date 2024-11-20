@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as Net from 'net';
-import {SerialPort} from 'serialport';
 import {CancellationToken, DebugConfiguration, ProviderResult, WorkspaceFolder} from 'vscode';
 import {DebugSessionClass} from './debugadapter';
 import {Decoration, DecorationClass} from './decoration';
@@ -35,53 +34,6 @@ export function activate(context: vscode.ExtensionContext) {
 	const extPath = context.extensionPath;
 	// it is also stored here as Utility does not include vscode which is more unit-test-friendly.
 	Utility.setExtensionPath(extPath);
-
-	// Command to show the available serial ports
-	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.serialport.list', async () => {
-		const list = await SerialPort.list();	// PortInfo[]
-		if (list.length > 0) {
-			const items = list.map(item => item.path);
-			const selection = await vscode.window.showInformationMessage('Serial ports (click to copy):', ...items);
-			// Copy selected item to clipboard.
-			if(selection)
-				await vscode.env.clipboard.writeText(selection);
-		}
-		else {
-			await vscode.window.showWarningMessage('No serial port found!');
-		}
-	}));
-
-
-	// Command to test communication on a serial port
-	context.subscriptions.push(vscode.commands.registerCommand('zx81debugger.serialport.test', async () => {
-		// Test first if in debug mode (= not allowed)
-		const session = DebugSessionClass.singleton();
-		if (session.running) {
-			await vscode.window.showWarningMessage('Cannot test the serial interface.\nPlease close the debug session first!');
-			return;
-		}
-
-		// Create list of ports for the user to choose from
-		const list = await SerialPort.list();	// PortInfo[]
-		if (list.length == 0) {
-			await vscode.window.showErrorMessage('No serial port found!');
-			return;
-		}
-
-		// Show the quick pick to the user
-		const options = list.map(portInfo => {
-			return {
-				label: portInfo.path,
-				description: portInfo.manufacturer ?? "",
-				value: portInfo.path
-			};
-		});
-		const selectedPortPath = await vscode.window.showQuickPick(options, {placeHolder: 'Select a port'});
-		// Check if an option was selected
-		if (!selectedPortPath)
-			return;
-		//console.log('Selected option:', selectedPortPath);
-	}));
 
 	// Command to directly run a .p file. Bypassing the debugger.
 	// If command is executed from a right click in the explorer parameter 1 and 2, both contain the file path.
