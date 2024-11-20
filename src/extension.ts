@@ -332,6 +332,24 @@ class DeZogConfigurationProvider implements vscode.DebugConfigurationProvider {
 					}).listen(0);
 				}
 
+				// If there is no launch.json, create a configuration that compiles and runs the current file.
+				const activeEditor = vscode.window.activeTextEditor;
+				if (!config || !config.request) {
+					// if 'request' is missing interpret this as a missing launch.json
+					if (!activeEditor || activeEditor.document.languageId !== 'asm-zx81') return;
+
+					const currentFilePath = UnifiedPath.getUnifiedPath(activeEditor.document.fileName);
+
+					config = Object.assign(config || {}, {
+						name: 'ZX81 Simulator',
+						type: 'zx81debugger',
+						request: 'launch',
+						remoteType: 'zsim',
+						rootFolder: UnifiedPath.dirname(currentFilePath),
+						source: UnifiedPath.getUnifiedPath(currentFilePath)
+					});
+				}
+
 				// Make VS Code connect to debug server
 				const addrInfo = this._server.address() as Net.AddressInfo;
 				Utility.assert(typeof addrInfo != 'string');
