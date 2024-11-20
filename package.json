@@ -188,14 +188,14 @@
 			},
 			{
 				"command": "zx81debugger.createNewFile",
-				"title": "New ZX81 Assembly File",
-				"shortTitle": "ZX81 Assembly File",
+				"title": "New ZX81 Assembler File",
+				"shortTitle": "ZX81 Assembler File",
 				"category": "ZX81 Debugger"
 			},
 			{
 				"command": "zx81debugger.pasteExample",
-				"title": "Insert an example of ZX81 Assembly File",
-				 "shortTitle": "Example ZX81 Assembly File",
+				"title": "Insert an example of ZX81 Assembler File",
+				 "shortTitle": "Example ZX81 Assembler File",
 				"category": "ZX81 Debugger"
 			}
 		],
@@ -1153,8 +1153,8 @@
 				"steps": [
 					{
 						"id": "zx81debugger.createFile",
-						"title": "Create a ZX81 assembler file",
-						"description": "Create a new, empty, ZX81 assembler file with the [New File...](command:welcome.showNewFileEntries) command in the **File** menu. Select **ZX81 Assembler File** in the list.\n[Create a ZX81 assembler file](command:welcome.showNewFileEntries)",
+						"title": "Create a ZX81 Assembler file",
+						"description": "Create a new, empty, ZX81 Assembler file with the [New File...](command:welcome.showNewFileEntries) command in the **File** menu. Select **ZX81 Assembler File** in the list.\n[Create a ZX81 Assembler file](command:welcome.showNewFileEntries)",
 						"media": {
 							"image": "assets/new-file.png",
 							"altText": "File / New File... command"
@@ -1177,7 +1177,7 @@
 					},
 					{
 						"id": "zx81debugger.save",
-						"title": "Save the ZX81 assembler file",
+						"title": "Save the ZX81 Assembler file",
 						"description": "[Save](command:zx81debugger.welcome.save) the ZX81 file. **Be sure to select ZX81 Assembler File** when saving the file to avoid confusion with any other installed extension.\n[Save the ZX81 file](command:zx81debugger.welcome.save)",
 						"media": {
 							"image": "assets/save.png",

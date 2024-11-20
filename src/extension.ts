@@ -10,6 +10,7 @@ import {Utility} from './misc/utility';
 import {PackageInfo} from './whatsnew/packageinfo';
 import {Z80UnitTestRunner} from './z80unittests/z80unittestrunner';
 import {Run} from './run';
+import { registerWelcomeCommands } from './welcome';
 
 
 /**
@@ -167,7 +168,9 @@ export function activate(context: vscode.ExtensionContext) {
 		await session.refreshDisassembler();
 	}));
 
-	// Register a configuration provider for 'dezog' debug type
+	registerWelcomeCommands(context);
+
+	// Register a configuration provider for 'zx81debugger' debug type
 	const configProvider = new DeZogConfigurationProvider();
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('zx81debugger', configProvider));
 
