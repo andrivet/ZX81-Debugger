@@ -45,7 +45,7 @@
 		"check-env": "node -e 'console.log(process.env)' | grep npm"
 	},
 	"dependencies": {
-		"@andrivet/z80-assembler": "^1.3.0",
+		"@andrivet/z80-assembler": "^1.3.2",
 		"@vscode/debugadapter": "^1.57.0",
 		"@vscode/debugprotocol": "^1.57.0",
 		"fast-glob": "^3.2.12",
@@ -982,7 +982,7 @@
 									"properties": {
 										"path": {
 											"type": "string",
-											"description": "Path to the binariy file."
+											"description": "Path to the binary file."
 										},
 										"start": {
 											"type": "string",
