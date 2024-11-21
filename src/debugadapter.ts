@@ -2022,9 +2022,6 @@ export class DebugSessionClass extends DebugSession {
 		else if (cmd === '-mvc') {
 			output = await MemoryCommands.evalMemViewColumns(tokens);
 		}
-		else if (cmd === '-ula') {
-			output = await MemoryCommands.evalDisplayView();
-		}
 		else if (cmd === '-mvd') {
 			output = await MemoryCommands.evalMemViewDiff(tokens);
 		}

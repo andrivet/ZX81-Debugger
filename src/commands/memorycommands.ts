@@ -529,21 +529,6 @@ export class MemoryCommands {
 		return 'OK';
 	}
 
-	/**
-	 * Shows a view for the ZX81.
-	 * @returns A Promise with a text to print.
-	 */
-	public static async evalDisplayView(): Promise<string> {
-		if(Remote instanceof ZSimRemote) {
-			const panel = new ZSimulationView(Remote as ZSimRemote);
-			await panel.update(true);
-		}
-
-		// Send response
-		return 'OK';
-	}
-
-
 	/** Shows a view with a memory dump that can be used for comparison
 	 * at different times.
 	 * @param tokens The arguments. I.e. the address and size.
