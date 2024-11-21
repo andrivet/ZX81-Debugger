@@ -1,7 +1,5 @@
 # Debug Hello-World Program - A Step-by-Step Guide
 
-> [Une version française est disponible](./debug-FR.md).
-
 If you have not yet used the [Welcome Walkthrough](./walkthrough.md), please follow it in order to create a `hello-world.zx81` file and learn how to start the ZX81 Debugger.
 
 ![ZX81](./images/welcome13.png)

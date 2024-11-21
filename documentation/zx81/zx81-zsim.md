@@ -1,14 +1,13 @@
-# ZX81
+# ZX81 Internal Simulator
+
+> Note: This is directly adapted from [DeZog's documentation](https://github.com/maziac/DeZog/blob/main/documentation/zx81/zx81-zsim.md).
+
 This document describes how the ZX81 "zsim" configuration can be used.
 
 # zsim
-The internal simulator "zsim" can be used for the ZX81.
-The easiest thing to do so is by using a "preset", e.g.
+The internal simulator "zsim" is used to simulate a ZX81:
 ~~~json
-"zsim": {
-	"preset": "zx81"
-	...
-}
+"remoteType": "zsim"
 ~~~
 
 This will configure an 56k ZX81, i.e. a ZX81 with all available RAM, so that it can also show ARX graphics.
@@ -17,8 +16,8 @@ What it does is to set the following zsim properties:
 	"memoryModel": "ZX81-56K",
 	"cpuFrequency": 3250000,
 	"defaultPortIn": 0xFF,
-	"zxKeyboard": "zx81",
-	"ulaScreen": "zx81",
+	"zxKeyboard": "true",
+	"ulaScreen": "true",
 	"ulaOptions": {
 		"hires": true,
         "borderSize": 10,
@@ -33,28 +32,22 @@ What it does is to set the following zsim properties:
     "zx81LoadOverlay": true
 ~~~
 
-If you use the preset you can easily override the defaults, e.g. to define a 16k ZX81 use:
-~~~json
-	"preset": "zx81",
-	"memoryModel": "ZX81-16K",
-~~~
-
 # Boot the ROM
 If you want to start the ZX81 without any program, i.e. just turn it on, don't use any "load..." properties. Instead set the "execAddress" to 0.
 ~~~json
 "execAddress": "0"
 ~~~
 
-![](images/zx81-zsim/boot.jpg)
+![](images/boot.jpg)
 
 Note:
 - The "execAddress" property is a general property, so it is outside "zsim".
 - In fact you could even skip the "execAddress" property, as it's default is 0 anyway.
 
 # Load a program
-DeZog can load .p, .p81 and .81 files (which are more or less the same anyway) with the "load" property, e.g:
+The ZX81 Debugger can load .p, .p81 and .81 files (which are more or less the same anyway) with the "load" property, e.g:
 ~~~json
-"load": "Galactica.p"
+"binary": "Galactica.p"
 ~~~
 Additionally you can also load raw data with the "loadObjs" property.
 
@@ -115,11 +108,11 @@ You can choose between modes by setting "hires" to true or false (default is tru
 	"hires": true/false
 }
 ~~~
-You can simulate pseudo-hires, chr%64/chr$128, hires (wrx, arx) and non-hires games/programs with "hires" set to "true".
+You can simulate pseudo-hires, CHR%64/CHR$128, hires (WRX, ARX) and non-hires games/programs with "hires" set to "true".
 Setting "hires" to false can be an advantage when debugging/developing non-hires games.
-If "hires" is false the dfile (the video screen) is decoded by "zsim" directly.
-The advantage is that any change in the screen is immediately visible as soon as the byte is added to the dfile.
-I.e. you can see the changes while your code is writing to the dfile and you are stepping through it.
+If "hires" is false the DFILE (the video screen) is decoded by "zsim" directly.
+The advantage is that any change in the screen is immediately visible as soon as the byte is added to the DFILE.
+I.e. you can see the changes while your code is writing to the DFILE and you are stepping through it.
 If "hires" is true, any changes would become visible only when the Z80 software takes care of the video generation.
 
 To visualize this a little bit, here is a screenshot of the hires game ["Against The Elements"](http://www.fruitcake.plus.com/Sinclair/ZX81/NewSoftware/AgainstTheElements.htm]):
@@ -174,20 +167,20 @@ Note: To simulate ARX hires graphics you need to use a memory model that enables
   }
 ~~~
 
-Please note that you cannot use "borderSize" and "screenArea" together. For tandard programs the "borderSize" might be easier to use. If you need more fine-grained control use the "screenArea".
+Please note that you cannot use "borderSize" and "screenArea" together. For standard programs the "borderSize" might be easier to use. If you need more fine-grained control use the "screenArea".
 
 ### "hires"
-If true the generation of the screen output by the cpu is simulated. This allows to display hires programs. If false the ZX81 dfile is converted directly into screen graphics. This can be an advantage when debugging a non-hires game.
+If true the generation of the screen output by the cpu is simulated. This allows to display hires programs. If false the ZX81 DFILE is converted directly into screen graphics. This can be an advantage when debugging a non-hires game.
 
 Defaults to true.
 
 ### "debug"
-If true a gray background is shown for the screen areas without output. Makes a difference for collapsed dfiles, i.e. only for ZX81 with 1-2k memory. If "chroma81" is selected it also initializes the chroma81 RAM (0xC000-0xFFFF) to 2 colors. Otherwise you might not see anything initially if ink and paper color are equal (i.e. 0).
+If true a gray background is shown for the screen areas without output. Makes a difference for collapsed DFILEs, i.e. only for ZX81 with 1-2k memory. If "chroma81" is selected it also initializes the chroma81 RAM (0xC000-0xFFFF) to 2 colors. Otherwise you might not see anything initially if ink and paper color are equal (i.e. 0).
 
 Defaults to false.
 
-#### Collapsed dfile
-In a ZX81 with 1-2k RAM the dfile is collapsed, i.e. it uses only the full width of a line if necessary. If the line does not contain anything no RAM is used for it.
+#### Collapsed DFILE
+In a ZX81 with 1-2k RAM the DFILE is collapsed, i.e. it uses only the full width of a line if necessary. If the line does not contain anything no RAM is used for it.
 In zsim this can be visualized (in standard and hires mode) with the "debug" option.
 If "debug" is true, everything that is not output to the screen is gray.
 
@@ -197,7 +190,7 @@ Here is the display of a ZX81 with only 1k RAM:
 
 # borderSize
 Select the pixel size you would like to see around a standard ZX81 display.
-"Standard" means a display that you would get from the ZX81 BASIC. I.e. without any tricks to achieve higher quality graphics like arx, wrx or using different timings.
+"Standard" means a display that you would get from the ZX81 BASIC. I.e. without any tricks to achieve higher quality graphics like ARX, WRX or using different timings.
 The "standard" position and size used is:
 (x=64, y=56, w=256, y=192)
 So, by setting "borderSize" you get (x=64-borderSize, y=56-borderSize, w=256+borderSize, y=192+borderSize)
@@ -274,7 +267,7 @@ The yellow lines show the standard border. The red line shows the start of the H
         - "colourizationFile": You can enter here the file path of your colourization file. See [Colors with a colourization file](#colors-with-a-colourization-file).
 
 # Modding
-Although not directly related to debugging you can use DeZog very easily to mod the graphics of ZX81 games.
+Although not directly related to debugging you can use the ZX81 Debugger very easily to mod the graphics of ZX81 games.
 Here as an example "Battlestar Galactica":
 
 The game with normal graphics, using the standard ZX81 charset:
@@ -293,10 +286,9 @@ And here with added colors:
 Of course, the changes you can do with this are limited as characters are re-used for other purposes (e.g. the "O" in "SCORE" which is also a meteor in the game).
 But on the other hand it is a very easy change.
 
-For the character set changes the only thing you need to do is to overwrite the ROM charset with your custom one.
-You do it with a "loadObjs" like this:
+For the character set changes the only thing you need to do is to overwrite the ROM charset with your custom one. You do it with a "binaries" like this:
 ~~~json
-"loadObjs": [
+"binaries": [
 	{	// Overwrite the charset in ROM
 		"path": "galactica_chars.bin",
 		"start": "0x1E00"
@@ -304,7 +296,7 @@ You do it with a "loadObjs" like this:
 ]
 ~~~
 
-As the ROM can be easily overwritten by DeZog it replaces all original bytes (characters) with that from galactica_chars.bin.
+As the ROM can be easily overwritten by the ZX81 Debugger it replaces all original bytes (characters) with that from galactica_chars.bin.
 
 To create galactica_chars.bin you can use a e.g. a hex editor, it's size should not exceed 512 bytes.
 
@@ -358,10 +350,9 @@ sjasmplus --raw=galactica_colors.bin galactica_colors.asm
 ~~~
 to convert it into a a binary [galactica_colors.bin](extra/galactica_colors.bin).
 
-You can use it in "loadObjs".
+You can use it in "binaries".
 ~~~json
-"loadObjs": [
-    ...,
+"binaries": [
 	{	// Write colors to RAM
 		"path": "galactica_colors.bin",
 		"start": "0xC000"   // Chroma 81 address
@@ -371,7 +362,6 @@ You can use it in "loadObjs".
 
 Furthermore you need to enable the Chroma 81:
 ~~~json
-"loadObjs": [
     "ulaOptions": {
         "chroma81": {
             "available": true,
@@ -380,7 +370,6 @@ Furthermore you need to enable the Chroma 81:
             "borderColor": 15
         }
     }
-]
 ~~~
 
 Examplarily here is the color code for the rocket:
@@ -398,7 +387,6 @@ The lower 4 bits are the foreground (INK) color, 9 = bright blue.
 You can get a lot of colourization files [here](http://www.fruitcake.plus.com/Sinclair/ZX81/Chroma/ChromaInterface_Software_ColourisationDefinitions.htm)
 To use them you need to enable the Chroma 81:
 ~~~json
-"loadObjs": [
     "ulaOptions": {
         "chroma81": {
             "available": true,
@@ -408,15 +396,14 @@ To use them you need to enable the Chroma 81:
     		"colourizationFile": "ZX80_Kong.col"
         }
     }
-]
 ~~~
 
-In this setup the DeZog will enable the Chroma81 and will also load the colourization file.
+In this setup the the ZX81 Debugger will enable the Chroma81 and will also load the colourization file.
 You don't need a ZX81 loader program for this to work.
 
 # CPU frequency
 The original ZX81 runs at 3.25 Mhz.
-This is also the default in zsim if `"preset": "zx81"` is chosen.
+This is also the default in zsim.
 However, if you have a fast computer then you can adjust the frequency and get a faster simulation.
 E.g.
 ~~~json
@@ -441,7 +428,7 @@ Note: If the simulation speed is not able to cope anymore with the cpu frequency
 # The Keyboard
 Set
 ~~~json
-	"zxKeyboard": "zx81"
+	"zxKeyboard": "true"
 ~~~
 to show the keyboard:
 
@@ -487,6 +474,8 @@ Please note that "Battlestar Galactica" only uses a partial address decoding.
 
 
 # Attribution
+* The [orginal source](https://github.com/maziac/DeZog/blob/main/documentation/zx81/zx81-zsim.md) of this document, by Thomas Busse.
+
 Many thanks to the authors of the shown games/programs:
 - ["Against The Elements"](http://www.fruitcake.plus.com/Sinclair/ZX81/NewSoftware/AgainstTheElements.htm), Paul Farrow
 - "Battlestar Galactica", Ch. Zwerschke

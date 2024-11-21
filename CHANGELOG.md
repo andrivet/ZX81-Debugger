@@ -1,9 +1,13 @@
 # Changelog
 
-## 2.0.0 - November 2024
+## 2.0.0 - November 21, 2024
 
-* Fork from latest version of Dezog (3.5.0)
-
+* Fork from latest version of DeZog (3.5.1).
+* Now use DeZog's excellent ZX81 simulator instead of the previous, partial, one.
+* Hi-Res is now supported (ARX, WRX) thanks to DeZog.
+* You can now use external assemblers like [sjasmplus](https://github.com/z00m128/sjasmplus).
+* Fix [Issue #8](https://github.com/andrivet/ZX81-Debugger/issues/8) - Labels not showing up in call stack, can't be used in watches.
+* Comments and Walkthrough in French are removed.
 
 ## 1.3.1 - June 28, 2023
 

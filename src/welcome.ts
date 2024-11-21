@@ -1,13 +1,3 @@
-/**
- * ZX81 Debugger
- * 
- * File:			welcome.ts
- * Description:		Custom commands for the welcome walkthrough
- * Author:			Sebastien Andrivet, based on Dezog my Thomas Busse (Maziac)
- * License:			GPLv3
- * Copyrights: 		ZX81 Debugger Copyright (C) 2023 Sebastien Andrivet
- * 					DeZog Copyright (C) 2023 Maziac
- */
 import * as vscode from 'vscode';
 
 const helloWorld = `;; Hello World - Example for ZX81 Debugger

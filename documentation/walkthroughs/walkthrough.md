@@ -1,6 +1,6 @@
 # ZX81 Debugger Walkthrough
 
-![ZX81](../assets/ZX81.png)
+![ZX81](../../assets/ZX81.png)
 
 This walkthrough will show you how to create, edit, compile and debug assembly programs for the ZX81.
 
