@@ -8,8 +8,6 @@ import {MemoryDiffView} from "../views/memorydiffview";
 import {MemoryDumpView} from "../views/memorydumpview";
 import {MemoryDumpViewWord} from "../views/memorydumpviewword";
 import {MemoryRegisterView} from "../views/memoryregisterview";
-import { ZSimRemote } from '../remotes/zsimulator/zsimremote';
-import { ZSimulationView } from '../remotes/zsimulator/zsimulationview';
 
 
 /** A static class that contains the debug console commands to evaluate the memory.

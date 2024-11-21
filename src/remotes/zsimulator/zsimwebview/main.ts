@@ -25,6 +25,10 @@ let countOfProcessedMessages = 0;
 const MESSAGE_HIGH_WATERMARK = 100;
 const MESSAGE_LOW_WATERMARK = 10;
 
+// The last cell that was clicked and is on.
+let lastCell: HTMLElement | null = null;
+// Is shift pressed?
+let shift: HTMLElement | null = null;
 
 // The slot HTML elements.
 const slots: HTMLElement[] = [];
@@ -223,8 +227,34 @@ function cellSelect(cell, on) {
 
 // Toggle the cell.
 globalThis.cellClicked = function (cell) {
-	cell.tag = !cell.tag;
-	cellSelect(cell, cell.tag);
+	if(lastCell) return;
+
+	// Press the key
+	cellSelect(cell, true);
+	// Remember the key
+	lastCell = cell;
+	// Unpress the key after 500ms
+	setTimeout(() => {
+		if(lastCell !== cell) return;
+		// Unpress the key
+		cellSelect(cell, false);
+		lastCell = null;
+		// Shift was presses?
+		if(shift) {
+			// Unpress the shift key
+			cellSelect(shift, false);
+			shift = null;
+		}
+	}, 500);
+}
+
+// Toggle the cell.
+// Only the shift key is a sticky key (until another key is pressed).
+globalThis.cellShiftClicked = function (cell) {
+	if(lastCell || shift) return;
+
+	cellSelect(cell, true);
+	shift = cell;
 }
 
 // Toggle the cell and the corresponding bit

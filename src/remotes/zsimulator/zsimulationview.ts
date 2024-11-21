@@ -817,7 +817,7 @@ export class ZSimulationView extends BaseView {
 					<span id="key_Enter" class="key" onClick="cellClicked(this)" style="margin-right: 0"></span>
 				<div style="height: ${zxKeybRowVertMargin}%"></div>
 					<span class="hor-space" style="width: ${zxKeybRow4OffsX}%"></span>
-					<span id="key_Shift_Caps" class="key" onClick="cellClicked(this)"></span>
+					<span id="key_Shift_Caps" class="key" onClick="cellShiftClicked(this)"></span>
 					<span id="key_KeyZ" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_KeyX" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_KeyC" class="key" onClick="cellClicked(this)"></span>
