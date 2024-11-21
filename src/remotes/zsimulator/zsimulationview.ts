@@ -564,17 +564,15 @@ export class ZSimulationView extends BaseView {
 		// Predefine with ZX81 keyboard
 		const zxKeybImg = "zx81_kbd.svg";
 		const zxKeybAspectRatio = 512 / 186;
-		const zxKeybKeyWidth = 7.975;
-		const zxKeybKeyHeight = 17;
-		const zxKeybKeyMarginRight = 1.125;
-		const zxKeybOffY = 1.6;
-		const zxKeybRowVertMargin = 7.85;
-		const zxKeybRow1OffsX = 0.775;
-		const zxKeybRow2OffsX = 5.75;
+		const zxKeybKeyWidth = 7.7;
+		const zxKeybKeyHeight = 16;
+		const zxKeybKeyMarginRight = 1.46;
+		const zxKeybOffY = 2.2;
+		const zxKeybRowVertMargin = 8.8;
+		const zxKeybRow1OffsX = 1.0;
+		const zxKeybRow2OffsX = 5.9;
 		const zxKeybRow3OffsX = 8.4;
-		const zxKeybRow4OffsX = 3.6;
-		const zxKeybShiftStyle = '';
-		const zxKeybSpaceStyle = '';
+		const zxKeybRow4OffsX = 3.7;
 
 		let html = `
 			<head>
@@ -624,7 +622,7 @@ export class ZSimulationView extends BaseView {
 			.key {
 				display: inline-block;
 				box-sizing: border-box;
-				/* border: 2px solid red; */
+				border-radius: 10px;
 				width: ${zxKeybKeyWidth}%;
 				height:  ${zxKeybKeyHeight}%;
 				margin-right: ${zxKeybKeyMarginRight}%;
@@ -632,10 +630,7 @@ export class ZSimulationView extends BaseView {
 			}
 
 			.key-pressed {
-				/*background-color: red;*/
-				/*border: 2px solid red;*/
-    			box-shadow: 0px 0px 20px 4px rgba(255, 255, 0, 1);
-				background-color: rgba(255, 255, 0, 0.5);
+				background-color: rgba(0, 255, 0, 0.5);
 			}
 
 			</style>
@@ -822,7 +817,7 @@ export class ZSimulationView extends BaseView {
 					<span id="key_Enter" class="key" onClick="cellClicked(this)" style="margin-right: 0"></span>
 				<div style="height: ${zxKeybRowVertMargin}%"></div>
 					<span class="hor-space" style="width: ${zxKeybRow4OffsX}%"></span>
-					<span id="key_Shift_Caps" class="key" onClick="cellClicked(this)" ${zxKeybShiftStyle}"></span>
+					<span id="key_Shift_Caps" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_KeyZ" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_KeyX" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_KeyC" class="key" onClick="cellClicked(this)"></span>
@@ -831,7 +826,7 @@ export class ZSimulationView extends BaseView {
 					<span id="key_KeyN" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_KeyM" class="key" onClick="cellClicked(this)"></span>
 					<span id="key_Period_Symbol" class="key" onClick="cellClicked(this)"></span>
-					<span id="key_Space" class="key" onClick="cellClicked(this)" ${zxKeybSpaceStyle}></span>
+					<span id="key_Space" class="key" onClick="cellClicked(this)"></span>
 			</div>
 			`;
 		}
