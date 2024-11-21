@@ -555,7 +555,7 @@ export class Settings {
 		if (launchCfg.zsim.zxKeyboard === undefined)
 			launchCfg.zsim.zxKeyboard = true;
 		if (launchCfg.zsim.memoryModel === undefined)
-			launchCfg.zsim.memoryModel = "ZX81-16K";
+			launchCfg.zsim.memoryModel = "ZX81-56K";
 		if (launchCfg.zsim.visualMemory === undefined)
 			launchCfg.zsim.visualMemory = false;
 		if (launchCfg.zsim.ulaScreen === undefined)
@@ -597,8 +597,6 @@ export class Settings {
 			launchCfg.zsim.ulaOptions = {
 			} as UlaOptions;
 		}
-		if (launchCfg.zsim.zx81LoadOverlay === undefined)
-			launchCfg.zsim.zx81LoadOverlay = false;
 
 		const ulaOptions = launchCfg.zsim.ulaOptions;
 		if (ulaOptions.hires === undefined)
