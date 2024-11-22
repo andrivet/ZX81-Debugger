@@ -95,7 +95,7 @@ export class MemoryDumpViewWord extends MemoryDumpView {
 
 		const addressColor = Settings.launch.memoryViewer.addressColor;
 		const bytesColor = Settings.launch.memoryViewer.bytesColor;
-		const changedColor = "red";
+		const changedColor = Settings.launch.memoryViewer.changedColor;
 
 		const format=
 			`

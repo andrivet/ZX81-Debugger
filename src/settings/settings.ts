@@ -415,8 +415,9 @@ export interface SettingsParameters extends DebugProtocol.LaunchRequestArguments
 	/// Values for the memory viewer.
 	memoryViewer: {
 		addressColor: string;	// The text color of the address field.
+		offsetColor: string;	// The color of the offset header.
 		bytesColor: string;	// The color of the bytes (hex values).
-		charColor: string;	// The text color of the ZX81 character field.
+		changedColor: string; // The background color of changed bytes.
 		addressHoverFormat: string;	// Format for the address when hovering.
 		valueHoverFormat: string;	// Format for the value when hovering.
 		registerPointerColors: Array<string>;	// The register/colors to show as colors in the memory view.
@@ -963,9 +964,9 @@ export class Settings {
 		if (!launchCfg.formatting.bigValues)
 			launchCfg.formatting.bigValues = "(${hex}h)=${b@:unsigned}/${b@:hex}h/'${b@:char}' or ${w@:hex}h/${w@:unsigned}";
 		if (!launchCfg.formatting.smallValues)
-			launchCfg.formatting.smallValues = "${hex}h, ${unsigned}u, ${signed}i, '${char}', ${bits}";
+			launchCfg.formatting.smallValues = "${hex}h, ${unsigned}u, ${signed}i, ${bits}";
 		if (!launchCfg.formatting.watchByte)
-			launchCfg.formatting.watchByte = "${hex}h,\t${unsigned}u,\t${signed}i,\t'${char}',\t${bits}b";
+			launchCfg.formatting.watchByte = "${hex}h,\t${unsigned}u,\t${signed}i,\t${bits}b";
 		if (!launchCfg.formatting.watchWord)
 			launchCfg.formatting.watchWord = "${hex}h,\t${unsigned}u,\t${signed}i";
 		if (!launchCfg.formatting.stackVar)
@@ -979,14 +980,16 @@ export class Settings {
 		}
 		if (!launchCfg.memoryViewer.addressColor)
 			launchCfg.memoryViewer.addressColor = "CornflowerBlue";
+		if (!launchCfg.memoryViewer.offsetColor)
+			launchCfg.memoryViewer.offsetColor = "LimeGreen";
 		if (!launchCfg.memoryViewer.bytesColor)
 			launchCfg.memoryViewer.bytesColor = "var(--vscode-editor-foreground)";	// Different dependent on dark or light theme.
-		if (!launchCfg.memoryViewer.charColor)
-			launchCfg.memoryViewer.charColor = "OliveDrab";
+		if (!launchCfg.memoryViewer.changedColor)
+			launchCfg.memoryViewer.changedColor = "#8B0000";
 		if (!launchCfg.memoryViewer.addressHoverFormat)
 			launchCfg.memoryViewer.addressHoverFormat = "${hex}h${\n:labelsplus|\n}";
 		if (!launchCfg.memoryViewer.valueHoverFormat)
-			launchCfg.memoryViewer.valueHoverFormat = "${hex}h, ${unsigned}u, ${signed}i, '${char}', ${bits}";
+			launchCfg.memoryViewer.valueHoverFormat = "${hex}h, ${unsigned}u, ${signed}i, ${bits}";
 		if (!launchCfg.memoryViewer.registerPointerColors)
 			launchCfg.memoryViewer.registerPointerColors = [
 				"HL", "darkgreen",

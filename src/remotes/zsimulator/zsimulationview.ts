@@ -98,7 +98,7 @@ export class ZSimulationView extends BaseView {
 
 		// Add title
 		Utility.assert(this.vscodePanel);
-		this.vscodePanel.title = 'Z80 Simulator - ' + simulator.zsim.memoryModel;
+		this.vscodePanel.title = 'ZX81 Simulator - ' + simulator.zsim.memoryModel;
 
 		// Read path for additional javascript code
 		this.customUiPath = simulator.zsim.customCode.uiPath;

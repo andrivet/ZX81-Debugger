@@ -2019,6 +2019,9 @@ export class DebugSessionClass extends DebugSession {
 		else if (cmd === '-mv') {
 			output = await MemoryCommands.evalMemViewByte(tokens);
 		}
+		else if (cmd === '-dfile') {
+			output = await MemoryCommands.evalMemViewDFile(tokens);
+		}
 		else if (cmd === '-mvc') {
 			output = await MemoryCommands.evalMemViewColumns(tokens);
 		}
@@ -2440,6 +2443,7 @@ the value correspondents to a label.
 "-mv address size [address_n size_n]*": Memory view at 'address' with 'size' bytes. Will open a new view to display the memory contents.
 "-mvd address size [address_n size_n]*": Opens a memory view that can be used for comparison. I.e. you start at some time than later you update the view and then you can make a diff and search e.g. for all values that have been decremented by 1.
 "-mvw address size [address_n size_n]* [big]": Memory view at 'address' with 'size' words. Like -mv but display unit is word instead of byte. Normally the display is little endian. This can be changed by adding "big" as last argument.
+"-dfile": Memory view of the ZX81 display file (D_FILE).
 "-rmv": Shows the memory register view. I.e. a dynamic view with the memory contents the registers point to.
 "-state save|restore|list|clear|clearall [statename]": Saves/restores the current state. I.e. the complete RAM + the registers.
 "-wpadd address [size] [type]": Adds a watchpoint. See below.

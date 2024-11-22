@@ -220,6 +220,17 @@ export class MemoryDumpView extends BaseView {
 		this.memDump.addBlock(startAddress, size, title);
 	}
 
+	/**
+	 * Adds a new memory block to display.
+	 * Memory blocks are ordered, i.e. the 'memDumps' array is ordered from
+	 * low to high (the start addresses).
+	 * @param startAddress The address of the memory block.
+	 * @param size The size of the memory block. (Can be 0x10000 max)
+	 */
+	public addBlockWithoutBoundary(startAddress: number, size: number, title: string) {
+		this.memDump.addBlockWithoutBoundary(startAddress, size, title);
+	}
+
 
 	/**
 	 * Merges nearby blocks into one block.
@@ -336,12 +347,12 @@ export class MemoryDumpView extends BaseView {
 			for (const metaBlock of this.memDump.metaBlocks) {
 				// Get changes
 				const addrValues = metaBlock.getChangedValues();
-				// Convert values to [address, hex-text , zx81-text]
+				// Convert values to [address, hex-text, zx81-text]
 				addrValues.forEach(addrVal => {
 					allAddrValsText.push([
 						addrVal[0],
 						Utility.getHexString(addrVal[1], 2),
-						this.vscodePanel.webview.asWebviewUri(vscode.Uri.file(Utility.getZX81ImageSrc(addrVal[1]))).toString()
+						this.vscodePanel.webview.asWebviewUri(Utility.getZX81ImageUri(addrVal[1])).toString()
 					]);
 				});
 			}
@@ -576,7 +587,7 @@ function selectAddress() {
 				prevSelectedHex.push(obj);
 			}
 		}
-		if(allAsciiObjs) {	// Check if for memorydumpviewword
+		if(allCharObjs) {	// Check if for memorydumpviewword
 			const spanObjs = getCharObjsForAddress(address+i);
 			if(spanObjs) {
 				for(const obj of spanObjs) {
@@ -736,8 +747,8 @@ window.addEventListener('load', () => {
 		// Lazy initialized values
 		let allHexObjs;
 		let allHexMap;
-		let allAsciiObjs;
-		let allAsciiMap;
+		let allCharObjs;
+		let allCharMap;
 
 		//---- Handle Mouse Over, Calculation of hover text -------
 		function mouseOverValue(obj) {
@@ -826,7 +837,7 @@ window.addEventListener('load', () => {
 		}
 
 		function getCharObjsForAddress(address) {
-			return document.querySelectorAll("span[address='"+address+"']");
+			return document.querySelectorAll("img[address='"+address+"']");
 		}
 
 
@@ -860,7 +871,7 @@ window.addEventListener('load', () => {
 				case 'setAddressColor':
 				{
 					const className = "registerPointer"+message.register;
-					const classNameAscii = "registerPointerChar"+message.register;
+					const classNameChar = "registerPointerChar"+message.register;
 
 					// Remove old
 					if(message.prevAddress) {
@@ -922,8 +933,8 @@ window.addEventListener('load', () => {
 						for(const obj of objs) {
 							obj.classList.remove("valueChanged");
 						}
-						// Get Ascii for address
-						const asciiObjs = getCharObjsForAddress(address);
+						// Get Char for address
+						const CharObjs = getCharObjsForAddress(address);
 						for(const obj of CharObjs) {
 							obj.classList.remove("valueChanged");
 						}
@@ -943,7 +954,7 @@ window.addEventListener('load', () => {
 						// Get ZX81 chars for address
 						const charObjs = getCharObjsForAddress(address);
 						for(const obj of charObjs) {
-							obj.firstChild.textContent = addrVal[2];
+							obj.src = addrVal[2];
 							obj.classList.add("valueChanged");
 						}
 					}
@@ -967,10 +978,10 @@ window.addEventListener('load', () => {
 					// Char
 					if(!allCharObjs) {
 						allCharObjs = document.querySelectorAll("span[address]");
-						allChatMap = new Map();
+						allCharMap = new Map();
 						for(const elem of allCharObjs) {
 							const addr = elem.getAttribute('address');
-							allChatMap.set(parseInt(addr), elem);
+							allCharMap.set(parseInt(addr), elem);
 						}
 					}
 					for(const obj of allCharObjs) {
@@ -1060,22 +1071,26 @@ window.addEventListener('load', () => {
 			return '';
 
 		const addressColor = Settings.launch.memoryViewer.addressColor;
-		const charColor = Settings.launch.memoryViewer.charColor;
 		const bytesColor = Settings.launch.memoryViewer.bytesColor;
-		const changedColor = "red";
+		const changedColor = Settings.launch.memoryViewer.changedColor;
+		const offsetColor = Settings.launch.memoryViewer.offsetColor;
 
 		const format =
 			`
 			<style>
+			table {
+				border-collapse: collapse;
+			}
 			td {
 				color: ${bytesColor};
+				padding: 0;
+				padding-right: 4px;
+				margin: 0;
 			}
-			td span {
-				color: ${charColor};
-			}
-			td span img {
-				width: 8px;
-				height: 8px;
+			td img {
+				vertical-align: bottom;
+				width: 16px;
+				height: 16px;
 			}
 			td.char {
 				width: 100%;
@@ -1084,14 +1099,16 @@ window.addEventListener('load', () => {
 			}
 			.addressClmn {
 				color: ${addressColor};
-				border-radius: 3px;
+				padding-right: 0.5em;
 				cursor: pointer;
 			}
-			.valueChanged {
-				border: 1px solid ${changedColor};
-				box-sizing: border-box;
+			.offset {
+				color: ${offsetColor};
 			}
-			.addressChanged {
+			.separator {
+				padding-right: 1em;
+			}
+			.valueChanged {
 				background-color: ${changedColor};
 			}
 			</style>
@@ -1101,7 +1118,7 @@ window.addEventListener('load', () => {
 					<col>
 					<col width="10em">
 					<col span="%d" width="20em">
-					<col width="10em">
+					<col>
 				</colgroup>
 
 			%s
@@ -1111,18 +1128,18 @@ window.addEventListener('load', () => {
 		// Create a string with the table itself.
 		let table = '';
 		let address = metaBlock.address;
-		let i = metaBlock.address % MEM_DUMP_BOUNDARY;
+		let i = this.boundary ? metaBlock.address % this.columns : 0;
 		address -= i;
-		const clmns = MEM_DUMP_BOUNDARY;
+		const clmns = this.columns;
 		const data = metaBlock.data;
 		const len = data.length;
 
 		// Table column headers
-		let clmStart = address % clmns;	// Usually 0
-		table += '<tr>\n<th>Address:</th> <th></th>';
+		let clmStart = this.boundary ? address % clmns : 0;
+		table += '<tr>\n<th class="addressClmn">Addr.</th>';
 		for (let k = 0; k < clmns; k++) {
 			const c = clmStart + k;
-			table += '<th>' + c.toString(16).toUpperCase() + '</th>';
+			table += '<th class="offset">' + Utility.getHexString(c, 2) + '</th>';
 		}
 		table += '\n</tr>';
 
@@ -1135,15 +1152,13 @@ window.addEventListener('load', () => {
 			// Check start of line
 			if (startOfLine) {
 				// start of a new line
-				let addrText = Utility.getHexString(addr64k, 4) + ':';
+				let addrText = Utility.getHexString(addr64k, 4);
 				table += '<tr>\n<td class="addressClmn" addressLine="' + addr64k + '" onmouseover="mouseOverAddress(this)">' + addrText + '</td>\n';
-				table += '<td> </td>\n';
 				char = '';
 				startOfLine = false;
 				if (i != 0) {
 					// Draw empty clmns
 					table += '<td></td>\n'.repeat(i);
-					char += '<span>&nbsp;</span>'.repeat(i);
 					address += i;
 				}
 			}
@@ -1165,15 +1180,13 @@ window.addEventListener('load', () => {
 			// Create html cell
 			table += '<td address="' + address + '" ondblclick="makeEditable(this)" onmouseover="mouseOverValue(this)">' + valueText + '</td>\n';
 
-
 			// Convert to ZX81 char (->html)
-			char += '<span address="' + address + '" onmouseover="mouseOverValue(this)">' + Utility.getZX81ImageSrc(value) + '</span>';
+			char += '<img address="' + address + '" src="' + this.vscodePanel.webview.asWebviewUri(Utility.getZX81ImageUri(value)) + '" onmouseover="mouseOverValue(this)">';
 
 			// Check end of line
 			if (i == clmns - 1) {
 				// print ZX81 characters.
-				table += '<td> </td>\n';
-				table += '<td>' + char + '</td>\n';
+				table += '<td class="separator"></td><td class="char">' + char + '</td>\n';
 				// end of a new line
 				table += '</tr>\n';
 			}

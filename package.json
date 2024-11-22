@@ -1055,13 +1055,17 @@
 										"type": "string",
 										"description": "The text color of the address field."
 									},
+									"offsetColor": {
+										"type": "string",
+										"description": "The text color of the offset header."
+									},
 									"bytesColor": {
 										"type": "string",
 										"description": "The color of the bytes shown in hex."
 									},
-									"charColor": {
+									"changedColor": {
 										"type": "string",
-										"description": "The text color of the ZX81 character field."
+										"description": "The background color of changed bytes."
 									},
 									"addressHoverFormat": {
 										"type": "string",
