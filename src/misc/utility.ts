@@ -553,7 +553,9 @@ export class Utility {
 	 * @param value The value of the character.
 	 * @returns the path of an asset.
 	 */
-	public static getZX81ImageSrc(value: number): string {
+	private static getZX81ImageSrc(value: number): string {
+		if(value < 0 || (value >= 0x40 && value < 0x80) || value >= 0xC0)
+			return '/chars/ZX81-placeholder.png';
 		return '/chars/ZX81-0x' + this.getHexString(value, 2) + '.png';
 	}
 
@@ -562,7 +564,7 @@ export class Utility {
 	 * @param path The path of the asset inside the assets folder.
 	 * @returns the URI of an asset.
 	 */
-	public static getAssetSrc(path: string): vscode.Uri {
+	private static getAssetSrc(path: string): vscode.Uri {
 		return vscode.Uri.file(this.getExtensionPath() + '/assets/' + path);
 	}
 
