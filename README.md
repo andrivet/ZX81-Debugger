@@ -30,6 +30,7 @@ The ZX81 debugger contains an [internal simulator called zsim](./documentation/z
 # Limitations
 
 * It supports only programs written in Z80 assembly language. There is no support for BASIC programs.
+* The internal Z80 assembler is limited for the moment and does not yet provides constructions such as macros or structures. If you need a more advanced assembler, you can use [SjASMPlus](https://z00m128.github.io/sjasmplus/documentation.html), the ZX81 Debugger is compatible with it.
 
 # ZX81 Debugger vs DeZog
 
@@ -37,17 +38,35 @@ The ZX81 Debugger is a fork of DeZog. Since version 3.5, DeZog is able to simula
 
 The main differences between the two are the following:
 
-* DeZog is very generic and permit to develop for the ZX81, the ZX Spectrum, the ZX Next or other Z80 platforms. The ZX81 Debugger is specialized for the ZX81 and does not include features specific the ZX Spectrum.
+* DeZog is very generic and permit to develop for the ZX81, the ZX Spectrum, the ZX Next or other Z80 platforms. The ZX81 Debugger is specialized for the ZX81 and does not include features specific to the ZX Spectrum.
 * DeZog does not include an assembler and is more involved to setup. The ZX81 Debugger in general is easier to setup as it contains a complete development environment for the ZX81 (assembler, syntax highlighting, sample code). There is no prerequisites (i.e. no external assembler, no configuration to prepare). It is ready to use after installation.
-* The ZX81 Debugger includes a walkthrough, accessible from the Welcome screen of Visual Studio Code.
-* The ZX81 Debugger used the extension `.zx81` for source file in order to provide Z80 syntax coloring.
+* The ZX81 Debugger includes a [Walkthrough](./documentation/walkthrough/walkthrough.md), accessible from the Welcome screen of Visual Studio Code.
+* The ZX81 Debugger uses the extension `.zx81` for source files in order to provide Z80 syntax coloring.
+* In memory dump view, the ZX81 Debugger displays characters as ZX81 characters, not ASCII:
+
+![Memory view](assets/memory.png)
+
+* The ZX81 Debugger includes two new commands: `-dfile` opens a memory view with the content of the`D_FILE` (low resolution display file).
+
+![Memory view](assets/dfile.png)
+
+  * `-mvc` opens a memory view with a precise number of columns. It is sometimes useful to examine structures.
+
+![Memory view](assets/mvc.png)
+
+* The ZX81 Debugger is able to display ZX81 System Variables:
+
+![Memory view](assets/sysvars.png)
+
+* The virtual keyboard of the ZX81 Debugger has a different look and feel that the keyboard of DeZog. In particular, only the **Shift** key is sticky. For all the other keys, when you click on them, they will be released after 0.5 seconds.
+
 * DeZog does include an integrated Help system, the ZX81 Debugger does not and its help is on-line (on GitHub). It is a choice, I prefer to keep the package small and avoid including all the help's images. 
-* There are some minor differences between DeZog and the ZX81 Debugger that correspond to different choices. For example, the ZX81 visual keyboard has a different behavior. There is also some differences in the configuration:
+* There are some minor differences between DeZog and the ZX81 Debugger regarding the configuration:
 
   * For the ZX81 Debugger, there is no `preset` parameter as only the ZX81 is supported.
   * Likewise, the `zxKeyboard` and `ulaScreen` are booleans (instead of strings) for the same reason.
   * With the ZX81 Debugger, you can load binaries (other than a .P file) using the `binaries` parameter. It is called `loadObjs` in DeZog.
-  * With the ZX81 Debugger, you can load and compile a source file with the `source` parameter. There is no equivalent with DeZog.
+  * With the ZX81 Debugger, you can load and compile a source file with the `source` parameter. There is no equivalent with DeZog since it does not include its own assembler.
 
 # Building
 

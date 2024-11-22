@@ -7,6 +7,9 @@
 * Hi-Res is now supported (ARX, WRX) thanks to DeZog.
 * You can now use external assemblers like [sjasmplus](https://github.com/z00m128/sjasmplus).
 * Fix [Issue #8](https://github.com/andrivet/ZX81-Debugger/issues/8) - Labels not showing up in call stack, can't be used in watches.
+* The virtual ZX81 keyboard is now fully functionning.
+* A new `dfile` command displays the content of the `D_FILE` (display file).
+* New `binaries` configuration parameter to load memory dumps in RAM.
 * Comments and Walkthrough in French are removed.
 
 ## 1.3.1 - June 28, 2023
