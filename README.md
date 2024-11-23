@@ -17,7 +17,7 @@ This Extension is only for the ZX81 computer. If you are looking for an Extensio
 
 Apart from [Visual Studio Code](https://code.visualstudio.com/download), there is no prerequisite. In Visual Studio Code, click on [the Extensions icons on the Activity Bar on the side](https://code.visualstudio.com/docs/editor/extension-marketplace) and search for "ZX81-Debugger" (andrivet.zx81-debugger). Click on **Install**.
 
-The Extension is ready, and you can start to write, compile and debug your programs. Look at the [Walkthrough](./documentation/walkthrough/walkthrough.md) to see how to use the ZX81-Debugger.
+The Extension is ready, and you can start to write, compile and debug your programs. Look at the [Walkthrough](./documentation/walkthroughs/walkthrough.md) to see how to use the ZX81-Debugger.
 
 # Assembler
 
