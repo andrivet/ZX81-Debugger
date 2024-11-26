@@ -1,7 +1,7 @@
 {
 	"name": "zx81-debugger",
 	"displayName": "ZX81 Debugger",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"publisher": "andrivet",
 	"description": "Visual Studio Code Debugger for the ZX81.",
 	"author": {

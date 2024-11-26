@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.1 - November 26, 2024
+
+* Fix typo in a link.
+
 ## 2.0.0 - November 21, 2024
 
 * Fork from latest version of DeZog (3.5.1).
