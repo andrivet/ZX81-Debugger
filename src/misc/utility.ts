@@ -9,7 +9,6 @@ import {Log} from '../log';
 import * as vm from 'vm';
 import * as jsonc from 'jsonc-parser';
 import {HexNumber} from '../settings/settingscustommemory';
-import * as vscode from 'vscode';
 
 
 // SECTION[epic=Utility]
@@ -547,36 +546,6 @@ export class Utility {
 		const res = (value == ' '.charCodeAt(0)) ? '&nbsp;' : Utility.getASCIIChar(value);
 		return res;
 	}
-
-	/**
-	 * Get the path of a ZX81 character.
-	 * @param value The value of the character.
-	 * @returns the path of an asset.
-	 */
-	private static getZX81ImageSrc(value: number): string {
-		if(value < 0 || (value >= 0x40 && value < 0x80) || value >= 0xC0)
-			return '/chars/ZX81-placeholder.png';
-		return '/chars/ZX81-0x' + this.getHexString(value, 2) + '.png';
-	}
-
-	/**
-	 * Get the URI of an asset.
-	 * @param path The path of the asset inside the assets folder.
-	 * @returns the URI of an asset.
-	 */
-	private static getAssetSrc(path: string): vscode.Uri {
-		return vscode.Uri.file(this.getExtensionPath() + '/assets/' + path);
-	}
-
-	/**
-	 * Get the Uri of a ZX81 character.
-	 * @param value The value of the character.
-	 * @returns the URI of an asset.
-	 */
-	public static getZX81ImageUri(value: number): vscode.Uri {
-		return Utility.getAssetSrc(Utility.getZX81ImageSrc(value));
-	}
-
 
 	/**
 	 * Returns a formatted number.

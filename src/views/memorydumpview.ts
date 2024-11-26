@@ -352,7 +352,7 @@ export class MemoryDumpView extends BaseView {
 					allAddrValsText.push([
 						addrVal[0],
 						Utility.getHexString(addrVal[1], 2),
-						this.vscodePanel.webview.asWebviewUri(Utility.getZX81ImageUri(addrVal[1])).toString()
+						this.vscodePanel.webview.asWebviewUri(BaseView.getZX81ImageUri(addrVal[1])).toString()
 					]);
 				});
 			}
@@ -1181,7 +1181,7 @@ window.addEventListener('load', () => {
 			table += '<td address="' + address + '" ondblclick="makeEditable(this)" onmouseover="mouseOverValue(this)">' + valueText + '</td>\n';
 
 			// Convert to ZX81 char (->html)
-			char += '<img address="' + address + '" src="' + this.vscodePanel.webview.asWebviewUri(Utility.getZX81ImageUri(value)) + '" onmouseover="mouseOverValue(this)">';
+			char += '<img address="' + address + '" src="' + this.vscodePanel.webview.asWebviewUri(BaseView.getZX81ImageUri(value)) + '" onmouseover="mouseOverValue(this)">';
 
 			// Check end of line
 			if (i == clmns - 1) {
