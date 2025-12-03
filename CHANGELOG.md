@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.0 - December 3, 2025
+## 2.2.0 - December 3, 2025
 
 * Fix another typo in a link.
 * Do not use HiRes by default so the walkthrough works as explained in the documentation.
