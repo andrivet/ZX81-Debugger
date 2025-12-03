@@ -40,7 +40,7 @@ The main differences between the two are the following:
 
 * DeZog is very generic and permit to develop for the ZX81, the ZX Spectrum, the ZX Next or other Z80 platforms. The ZX81 Debugger is specialized for the ZX81 and does not include features specific to the ZX Spectrum.
 * DeZog does not include an assembler and is more involved to setup. The ZX81 Debugger in general is easier to setup as it contains a complete development environment for the ZX81 (assembler, syntax highlighting, sample code). There is no prerequisites (i.e. no external assembler, no configuration to prepare). It is ready to use after installation.
-* The ZX81 Debugger includes a [Walkthrough](./documentation/walkthrough/walkthrough.md), accessible from the Welcome screen of Visual Studio Code.
+* The ZX81 Debugger includes a [Walkthrough](./documentation/walkthroughs/walkthrough.md), accessible from the Welcome screen of Visual Studio Code.
 * The ZX81 Debugger uses the extension `.zx81` for source files in order to provide Z80 syntax coloring.
 * In memory dump view, the ZX81 Debugger displays characters as ZX81 characters, not ASCII:
 
