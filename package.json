@@ -603,7 +603,7 @@
 											"hires": {
 												"type": "boolean",
 												"description": "ZX81 only. If true the generation of the screen output by the cpu is simulated. This allows to display hires programs. If false the ZX81 dfile is converted directly into screen graphics. This can be an advantage when debugging a non-hires game. Defaults to true.",
-												"default": true
+												"default": false
 											},
 											"lines": {
 												"type": "array",

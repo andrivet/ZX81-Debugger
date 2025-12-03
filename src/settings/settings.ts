@@ -601,7 +601,7 @@ export class Settings {
 
 		const ulaOptions = launchCfg.zsim.ulaOptions;
 		if (ulaOptions.hires === undefined)
-			ulaOptions.hires = true;
+			ulaOptions.hires = false;
 
 		// screenArea and borderSize, only one can be defined by the user.
 		// Settings will turn borderSize into screenArea.
