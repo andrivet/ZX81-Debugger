@@ -1,7 +1,7 @@
 {
 	"name": "zx81-debugger",
 	"displayName": "ZX81 Debugger",
-	"version": "2.1.0",
+	"version": "2.2.0",
 	"publisher": "andrivet",
 	"description": "Visual Studio Code Debugger for the ZX81.",
 	"author": {
@@ -195,7 +195,7 @@
 			{
 				"command": "zx81debugger.pasteExample",
 				"title": "Insert an example of ZX81 Assembler File",
-				 "shortTitle": "Example ZX81 Assembler File",
+				"shortTitle": "Example ZX81 Assembler File",
 				"category": "ZX81 Debugger"
 			}
 		],
