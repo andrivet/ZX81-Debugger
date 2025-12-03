@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.0 - December 3, 2025
+
+* Fix another typo in a link.
+* Do not use HiRes by default so the walkthrough works as explained in the documentation.
+
 ## 2.0.1 - November 26, 2024
 
 * Fix typo in a link.
@@ -11,7 +16,7 @@
 * Hi-Res is now supported (ARX, WRX) thanks to DeZog.
 * You can now use external assemblers like [sjasmplus](https://github.com/z00m128/sjasmplus).
 * Fix [Issue #8](https://github.com/andrivet/ZX81-Debugger/issues/8) - Labels not showing up in call stack, can't be used in watches.
-* The virtual ZX81 keyboard is now fully functionning.
+* The virtual ZX81 keyboard is now fully functioning.
 * A new `dfile` command displays the content of the `D_FILE` (display file).
 * New `binaries` configuration parameter to load memory dumps in RAM.
 * Comments and Walkthrough in French are removed.
