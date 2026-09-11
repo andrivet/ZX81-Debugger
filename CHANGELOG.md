@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.3.0 - December 29, 2025
+
+* Show the right source code in case of compilation error.
+* Include the latest version (2.0.0) of the z80 assembler with non-documented z80 opcodes and fake instructions.
+
+## 2.2.1 - December 22, 2025
+
+* Fix #14 - Invalid ZX81 characters in strings (bug was in z80 assembly library)
+
 ## 2.2.0 - December 3, 2025
 
 * Fix another typo in a link.
