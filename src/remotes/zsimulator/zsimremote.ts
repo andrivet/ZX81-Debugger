@@ -822,11 +822,6 @@ export class ZSimRemote extends DzrpRemote {
 		//return this.z80Cpu.cpuTstatesCounter;
 		return this.passedTstates - this.prevPassedTstates;
 	}
-	// // Same as sync function.
-	// public getTstatesSync(): number {
-	// 	//return this.z80Cpu.cpuTstatesCounter;
-	// 	return this.passedTstates - this.prevPassedTstates;
-	// }
 
 
 	/**

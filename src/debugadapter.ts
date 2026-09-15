@@ -145,7 +145,7 @@ export class DebugSessionClass extends DebugSession {
 	 */
 	public static singleton(): DebugSessionClass {
 		if (!this.debugAdapterSingleton) {
-			this.debugAdapterSingleton = new DebugSessionClass();
+			new DebugSessionClass();
 		}
 		return this.debugAdapterSingleton;
 	}
@@ -154,7 +154,7 @@ export class DebugSessionClass extends DebugSession {
 
 	/** Returns if a DeZog debug session is currently running. */
 	public static isRunning(): boolean {
-		if (this.debugAdapterSingleton == undefined)
+		if (this.debugAdapterSingleton === undefined)
 			return false;
 		return this.debugAdapterSingleton.running;
 	}
@@ -166,9 +166,11 @@ export class DebugSessionClass extends DebugSession {
 	 */
 	public constructor() {
 		super();
+		DebugSessionClass.debugAdapterSingleton = this;
 		// Init line numbering
 		this.setDebuggerLinesStartAt1(false);
 		this.setDebuggerColumnsStartAt1(false);
+		this.setRunAsServer(true);
 		vscode.debug.onDidChangeActiveDebugSession(dbgSession => {
 			if (dbgSession?.configuration.type === 'zx81debugger') {
 				if (this.debugConsoleSavedText) {
@@ -189,7 +191,7 @@ export class DebugSessionClass extends DebugSession {
 		// Return if currently a debug session is running
 		if (this.running)
 			throw Error("There is already an active debug session.");
-		if (this.state != DbgAdapterState.NORMAL)
+		if (this.state !== DbgAdapterState.NORMAL)
 			throw Error("Debugger state is wrong.");
 
 
@@ -425,7 +427,7 @@ export class DebugSessionClass extends DebugSession {
 			this.state = DbgAdapterState.NORMAL;
 			this.running = false;
 		}
-		catch(e) {
+		catch (e) {
 			console.log('exception', e);
 		}
 		//console.log('disconnectAll ended');
@@ -497,7 +499,7 @@ export class DebugSessionClass extends DebugSession {
 				filter: bp.name,
 				label: bp.name,
 				description: bp.description,
-				supportsCondition: (bp.conditionString != undefined)
+				supportsCondition: (bp.conditionString !== undefined)
 			}));
 		}
 
@@ -888,7 +890,7 @@ export class DebugSessionClass extends DebugSession {
 		// Now match all given breakpoints with the available.
 		const vscodeBreakpoints = givenBps.map(gbp => {
 			// Search in current list
-			let foundCbp: RemoteBreakpoint|undefined;
+			let foundCbp: RemoteBreakpoint | undefined;
 			const lineNr = gbp.line;
 			for (const cbp of currentBreakpoints) {
 				const cLineNr = this.convertDebuggerLineToClient(cbp.lineNr);
@@ -899,7 +901,7 @@ export class DebugSessionClass extends DebugSession {
 			}
 
 			// Create vscode breakpoint with verification
-			const verified = (foundCbp != undefined) && (foundCbp.longAddress >= 0);
+			const verified = (foundCbp !== undefined) && (foundCbp.longAddress >= 0);
 			const bp = new Breakpoint(verified, lineNr, 0, source);
 			if (foundCbp && foundCbp.longAddress >= 0) {
 				// Add address to source name.
@@ -967,7 +969,6 @@ export class DebugSessionClass extends DebugSession {
 	 */
 	protected async stackTraceRequest(response: DebugProtocol.StackTraceResponse, _args: DebugProtocol.StackTraceArguments): Promise<void> {
 		// For the unit tests it happens that if you debug-stepOver the last line (TC_END)
-
 		// a stackTraceRequest is still sent, even when Remote is disposed.
 		if (!Remote) {
 			return;
@@ -1002,8 +1003,7 @@ export class DebugSessionClass extends DebugSession {
 
 
 			// Update disasm.list
-			if (disasmUpdated)
-			{
+			if (disasmUpdated) {
 				// Remove all breakpoints temporarily
 				const removeBps = prevBpAddresses.map(sbpAddr => sbpAddr.sbp);
 				// Note: at this point the new disassembly has already taken place. I.e. the line/addr associations are potentially wrong. However, because we remove all breakpoints, the following setBreakpointsRequest anyway does not contain any bp with line number for the disassembly file and will remove all breakpoints for the file.
@@ -1114,7 +1114,7 @@ export class DebugSessionClass extends DebugSession {
 				// Get line number for stack address from disassembly
 				const addr = sf.longAddress;
 				const lineNr = Disassembly.getLineForAddress(addr);
-				if (lineNr != undefined) {
+				if (lineNr !== undefined) {
 					// Store
 					sf.source = this.createSource(DisassemblyClass.getAbsFilePath());
 					sf.line = this.convertDebuggerLineToClient(lineNr);
@@ -1195,12 +1195,12 @@ export class DebugSessionClass extends DebugSession {
 		if (!fileName) {
 			// Check disassembly
 			lineNr = Disassembly.getLineForAddress(addr) as number;
-			if (lineNr!= undefined) {
+			if (lineNr != undefined) {
 				// Found
 				fileName = DisassemblyClass.getAbsFilePath();
 			}
 		}
-		if(fileName) {
+		if (fileName) {
 			// Found in other file
 			uri = vscode.Uri.file(fileName);
 		}
@@ -1646,9 +1646,9 @@ export class DebugSessionClass extends DebugSession {
 				// Compare with start location
 				if (prevFileLoc.fileName === '')
 					break;
-				if (nextFileLoc.lineNr != prevFileLoc.lineNr)
+				if (nextFileLoc.lineNr !== prevFileLoc.lineNr)
 					break;
-				if (nextFileLoc.fileName != prevFileLoc.fileName)
+				if (nextFileLoc.fileName !== prevFileLoc.fileName)
 					break;
 			}
 
@@ -1868,22 +1868,25 @@ export class DebugSessionClass extends DebugSession {
 				breakReasonString = await Remote.stepOut();
 			}
 
-			// Print break reason
-			if (breakReasonString) {
-				// Output a possible problem (end of log reached)
-				this.debugConsoleIndentedText(breakReasonString);
-				// Show break reason
-				this.decorateBreak(breakReasonString);
-			}
+			// Check remote (The Remote could have been terminated meanwhile)
+			if (Remote) {
+				// Print break reason
+				if (breakReasonString) {
+					// Output a possible problem (end of log reached)
+					this.debugConsoleIndentedText(breakReasonString);
+					// Show break reason
+					this.decorateBreak(breakReasonString);
+				}
 
-			if (!stepBackMode) {
-				// Display info
-				await this.endStepInfo();
-			}
+				if (!stepBackMode) {
+					// Display info
+					await this.endStepInfo();
+				}
 
-			// Check if in unit test mode
-			if (this.state === DbgAdapterState.UNITTEST) {
-				await Z80UnitTestRunner.dbgCheckUnitTest(breakReasonString);
+				// Check if in unit test mode
+				if (this.state === DbgAdapterState.UNITTEST) {
+					await Z80UnitTestRunner.dbgCheckUnitTest(breakReasonString);
+				}
 			}
 
 			// Send event
@@ -2139,7 +2142,7 @@ export class DebugSessionClass extends DebugSession {
 						const modulePrefix = entry.modulePrefix;
 						// Get label value
 						const labelValue = Utility.evalExpression(expression, true, modulePrefix, lastLabel);
-						if (labelValue != undefined) {
+						if (labelValue !== undefined) {
 							// Get content
 							const memDump = await Remote.readMemoryDump(labelValue, 2);
 							// Format byte
@@ -2253,7 +2256,7 @@ export class DebugSessionClass extends DebugSession {
 		let littleEndian = true;
 		if (endianness === 'big')
 			littleEndian = false;	// At the moment it is used only for immediate values
-		else if (endianness != 'little') {
+		else if (endianness !== 'little') {
 			throw Error("Unknown endianness: " + endianness);
 		}
 
@@ -2346,7 +2349,7 @@ export class DebugSessionClass extends DebugSession {
 		// Check for sub labels (i.e. check for struct)
 		let props;
 		let propsLength = 0
-		if (lblType != undefined) {
+		if (lblType !== undefined) {
 			props = Labels.getSubLabels(lblType);
 			propsLength = props.length;
 		}
@@ -2577,12 +2580,12 @@ E.g. use "-help -view" to put the help text in an own view.
 	 */
 	protected async evalMemModel(tokens: Array<string>): Promise<string> {
 		// Check count of arguments
-		if (tokens.length != 0) {
+		if (tokens.length !== 0) {
 			// Error Handling: No arguments
 			throw new Error("No arguments are expected.");
 		}
 
-		const txt =Remote.memoryModel.getMemModelInfo();
+		const txt = Remote.memoryModel.getMemModelInfo();
 		return txt;
 	}
 
@@ -2721,7 +2724,7 @@ E.g. use "-help -view" to put the help text in an own view.
 		// Size
 		let size = 1;
 		let access = 'rw';
-		if (tokens[1] != undefined)
+		if (tokens[1] !== undefined)
 			size = Utility.evalExpression(tokens[1]);
 		// Access
 		if (tokens[2]) {
@@ -2759,7 +2762,7 @@ E.g. use "-help -view" to put the help text in an own view.
 		// Size
 		let size = 1;
 		let access = 'rw';
-		if (tokens[1] != undefined)
+		if (tokens[1] !== undefined)
 			size = Utility.evalExpression(tokens[1]);
 		// Access
 		if (tokens[2]) {
@@ -2987,7 +2990,7 @@ E.g. use "-help -view" to put the help text in an own view.
 			const bank = Z80RegistersClass.getBankFromAddress(addr);
 			if (bank >= 0) {
 				const slotIndex = Z80Registers.getSlotFromAddress(addr);
-				if (bank != slots[slotIndex]) {
+				if (bank !== slots[slotIndex]) {
 					this.showError("Cannot set PC to a location (address=" + Utility.getHexString(addr & 0xFFFF, 4) + "h) of a bank (bank " + bank + ") that is currently not paged in.");
 					return;
 				}
@@ -3035,7 +3038,7 @@ E.g. use "-help -view" to put the help text in an own view.
 		while (address < 0xFFFF) {
 			const longAddr = (address + 1) | upperAddr;
 			const fileLine = Remote.getFileAndLineForAddress(longAddr);
-			if (fileLine.lineNr != toLineNr || fileLine.fileName != filename)
+			if (fileLine.lineNr !== toLineNr || fileLine.fileName !== filename)
 				break;
 			// Next
 			address++;
@@ -3051,7 +3054,7 @@ E.g. use "-help -view" to put the help text in an own view.
 			const bank = Z80RegistersClass.getBankFromAddress(fromAddr);
 			if (bank >= 0) {
 				const slotIndex = Z80Registers.getSlotFromAddress(addr);
-				if (bank != slots[slotIndex]) {
+				if (bank !== slots[slotIndex]) {
 					throw Error("Memory currently not paged in.  (address=" + Utility.getHexString(bank & 0xFFFF, 4) + "h, bank=" + bank + ")");
 				}
 			}
@@ -3330,7 +3333,7 @@ E.g. use "-help -view" to put the help text in an own view.
 						let k = i + 1;
 						for (; k < lineNrs.length; k++) {
 							lineNr++;
-							if (lineNr != lineNrs[k])
+							if (lineNr !== lineNrs[k])
 								break;
 						}
 						compressed.push([lineNrs[i], lineNrs[k - 1]]);

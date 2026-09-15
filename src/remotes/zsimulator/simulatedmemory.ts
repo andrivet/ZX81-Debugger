@@ -73,12 +73,14 @@ export class SimulatedMemory implements Serializable {
 	// The number of bits to shift to get the slot from the address
 	protected shiftCount: number;
 
+	// The size of the visual memory.
+	protected VISUAL_MEM_MAX = 256;	// 256 entries
+
 	// Visual memory: shows the access as an image.
-	// The image is just 1 pixel high.
 	protected visualMemory: Array<number>;
 
-	// The size of the visual memory.
-	protected VISUAL_MEM_SIZE_SHIFT = 8;
+	// The full 64k address space is mapped into this visual memory.
+	protected visualDetailedMemory: Array<number>;
 
 	// Colors:
 	protected VISUAL_MEM_COL_READ = 1;
@@ -130,7 +132,8 @@ export class SimulatedMemory implements Serializable {
 		this.m1Read8 = this.read8.bind(this);
 
 		// Create visual memory
-		this.visualMemory = new Array<number>(1 << (16 - this.VISUAL_MEM_SIZE_SHIFT));	// E.g. 256
+		this.visualMemory = new Array<number>(this.VISUAL_MEM_MAX + 1);	// E.g. 256 (+1 to avoid issues with rounding)
+		this.visualDetailedMemory = new Array<number>(0x10000);
 		this.clearVisualMemory();
 
 		// Memory is organized in banks.
@@ -195,7 +198,7 @@ export class SimulatedMemory implements Serializable {
 			this.setSlotsInContext();
 			// Calculate bank
 			this.evaluateIoMmu(this.memoryModel.ioMmu, port, value);
-			this.getSlotsFromContext();
+			this.getSlotsFromContext(prevSlots);
 			// Check for error
 			try {
 				this.checkSlots();
@@ -215,16 +218,22 @@ export class SimulatedMemory implements Serializable {
 	 */
 	protected setSlotsInContext() {
 		for (const slotName of this.slotNames) {
-			this.bankSwitchingContext[slotName.name] = this.slots[slotName.index];
+			const bank = this.slots[slotName.index];
+			this.bankSwitchingContext[slotName.name] = bank;
 		}
 	}
 
 
 	/** Retrieves the named slots from the 'bankSwitchingContext'.
+	 * @param prevSlots The previous slots, only if value changed the named values are updated.
+	 * Note: this prevents overwriting slots that were changed by index.
 	 */
-	protected getSlotsFromContext() {
+	protected getSlotsFromContext(prevSlots: number[]) {
 		for (const slotName of this.slotNames) {
-			this.slots[slotName.index] = this.bankSwitchingContext[slotName.name];
+			const index = slotName.index;
+			const bank = this.bankSwitchingContext[slotName.name];
+			if (prevSlots[index] !== bank)
+				this.slots[index] = bank;
 		}
 	}
 
@@ -283,6 +292,9 @@ export class SimulatedMemory implements Serializable {
 		let ioMmu = this.memoryModel.ioMmu;
 		if (!ioMmu)
 			return;
+
+		// Save the current slots
+		const prevSlots = [...this.slots];
 
 		try {
 			// Set slots etc.
@@ -348,6 +360,10 @@ export class SimulatedMemory implements Serializable {
 			}
 			// Re-throw
 			throw e;
+		}
+		finally {
+			// Restore previous slots
+			this.slots = [...prevSlots];
 		}
 	}
 
@@ -476,7 +492,8 @@ export class SimulatedMemory implements Serializable {
 		}
 
 		// Visual memory
-		this.visualMemory[addr64k >>> this.VISUAL_MEM_SIZE_SHIFT] = this.VISUAL_MEM_COL_READ;
+		this.visualMemory[Math.floor(addr64k * this.VISUAL_MEM_MAX / 0x10000)] = this.VISUAL_MEM_COL_READ;
+		this.visualDetailedMemory[addr64k] = this.VISUAL_MEM_COL_READ;
 
 		// Read
 		const slotIndex = this.slotAddress64kAssociation[addr64k];
@@ -502,8 +519,8 @@ export class SimulatedMemory implements Serializable {
 		}
 
 		// Visual memory
-		this.visualMemory[addr64k >>> this.VISUAL_MEM_SIZE_SHIFT] = this.VISUAL_MEM_COL_WRITE;
-
+		this.visualMemory[Math.floor(addr64k * this.VISUAL_MEM_MAX / 0x10000)] = this.VISUAL_MEM_COL_WRITE;
+		this.visualDetailedMemory[addr64k] = this.VISUAL_MEM_COL_WRITE;
 
 		// Read
 		const slotIndex = this.slotAddress64kAssociation[addr64k];
@@ -607,9 +624,10 @@ export class SimulatedMemory implements Serializable {
 
 
 	// Write 1 byte.
-	public setVisualProg(addr: number) {
+	public setVisualProg(addr64k: number) {
 		// Visual memory
-		this.visualMemory[addr >>> this.VISUAL_MEM_SIZE_SHIFT] = this.VISUAL_MEM_COL_PROG;
+		this.visualMemory[Math.floor(addr64k * this.VISUAL_MEM_MAX / 0x10000)] = this.VISUAL_MEM_COL_PROG;
+		this.visualDetailedMemory[addr64k] = this.VISUAL_MEM_COL_PROG;
 	}
 
 
@@ -711,15 +729,53 @@ export class SimulatedMemory implements Serializable {
 	}
 
 
-	/** Writes a complete memory bank.
+	/** Reads a block of bytes from a bank.
 	 * @param bankNr The bank number.
-	 * @param block The block to write.
+	 * @param offs The offset inside the bank.
+	 * @param size The length of the data in bytes.
+	 * @returns The data as Uint8Array (a new array is returned.)
 	 */
-	public writeBank(bankNr: number, block: Buffer | Uint8Array) {
+	public readBank(bankNr: number, offs: number, size: number): Uint8Array {
+		// The block is inside one bank only. It will wrap around.
 		const bank = this.memoryBanks[bankNr];
-		if (block.length != bank.byteLength)
-			throw Error("writeBank: Block length " + block.length + " not allowed. Expected " + bank.byteLength + ".");
-		bank.set(block);
+		const bankSize = bank.byteLength;
+		const realOffs = offs % bankSize;
+		let realSize = size;
+		if (realOffs + realSize > bankSize)
+			realSize = bankSize - realOffs;
+
+		// Copy
+		const data = bank.slice(realOffs, realOffs + realSize);
+
+		return data;
+	}
+
+
+	/** Writes a block of bytes.
+	 * @param bankNr The bank number.
+	 * @param offs The offset inside the bank.
+	 * @param data The block to write.
+	 * @param allowedTypes The allowed bank types. Default is UNKNOWN, ROM and RAM.
+	 * E.g. if you only want to allow to write to RAM set [BankType.RAM].
+	 */
+	public writeBank(bankNr: number, offs: number, data: Buffer | Uint8Array, allowedTypes: BankType[] = [BankType.ROM, BankType.RAM, BankType.UNKNOWN]) {
+		if (!(data instanceof Uint8Array))
+			data = new Uint8Array(data);
+		const size = data.byteLength;
+
+		// The block is inside one bank only. It will wrap around.
+		const bank = this.memoryBanks[bankNr];
+		const bankSize = bank.byteLength;
+		const realOffs = offs % bankSize;
+
+		if (realOffs + size > bankSize) {
+			// Shorten origin
+			const realSize = bankSize - realOffs;
+			data = data.subarray(0, realSize);
+		}
+
+		// Copy
+		bank.set(data, realOffs);
 	}
 
 
@@ -727,6 +783,7 @@ export class SimulatedMemory implements Serializable {
 	 */
 	public clearVisualMemory() {
 		this.visualMemory.fill(0);
+		this.visualDetailedMemory.fill(0);
 	}
 
 
@@ -734,6 +791,16 @@ export class SimulatedMemory implements Serializable {
 	 */
 	public getVisualMemory(): number[] {
 		return this.visualMemory;
+	}
+
+
+	/** Returns a slice of the visual memory.
+	 * @param addr64k The 64k start address.
+	 * @param size The size of the block.
+	 * @returns The visual detailed memory as a buffer.
+	 */
+	public getVisualMemBlock(addr64k: number, size: number): number[] {
+		return this.visualDetailedMemory.slice(addr64k, addr64k + size);
 	}
 
 
