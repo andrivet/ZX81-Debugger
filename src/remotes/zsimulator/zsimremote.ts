@@ -750,7 +750,8 @@ export class ZSimRemote extends DzrpRemote {
 	 */
 	protected deserializeState(data: Uint8Array) {
 		// Create mem buffer for reading
-		const memBuffer = MemBuffer.from(data.buffer);
+		const b = Buffer.from(data);
+		const memBuffer = MemBuffer.from(b.buffer);
 
 		// Deserialize own properties
 		this.deserialize(memBuffer);
@@ -1073,7 +1074,8 @@ tstates add value: add 'value' to t-states, then create a tick event. E.g. "zsim
 	 * @returns A promise with an Uint8Array.
 	 */
 	public async sendDzrpCmdReadMem(addr64k: number, size: number): Promise<Uint8Array> {
-		const buffer = this.memory.readBlock(addr64k, size);
+	        let buffer: Uint8Array;
+		buffer = this.memory.readBlock(addr64k, size);
 		return buffer;
 	}
 
@@ -1097,7 +1099,7 @@ tstates add value: add 'value' to t-states, then create a tick event. E.g. "zsim
 	 * @throws An exception if e.g. the bank size does not match.
 	  */
 	public async sendDzrpCmdWriteBank(bank: number, dataArray: Buffer | Uint8Array): Promise<void> {
-		this.memory.writeBank(bank, dataArray);
+		this.memory.writeBank(bank, 0, dataArray);
 	}
 
 

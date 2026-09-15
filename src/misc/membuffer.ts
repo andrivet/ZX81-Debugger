@@ -115,7 +115,7 @@ export class MemBuffer {
 
 	/** Writes an array to the next position (offset).
 	 */
-	public writeArrayBuffer(buffer: ArrayBuffer) {
+	public writeArrayBuffer(buffer: ArrayBufferLike) {
 		const length = buffer.byteLength;
 		// Write length
 		this.write32(length);
@@ -135,7 +135,7 @@ export class MemBuffer {
 	public writeString(s: string) {
 		const enc = new TextEncoder();
 		const buffer = enc.encode(s);
-		this.writeArrayBuffer(buffer);
+		this.writeArrayBuffer(buffer.buffer);
 	}
 
 

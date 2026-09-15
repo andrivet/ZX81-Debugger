@@ -371,7 +371,7 @@ export class SimulatedMemory implements Serializable {
 
 		// Store banks
 		for (const bank of this.memoryBanks)
-			memBuffer.writeArrayBuffer(bank);
+			memBuffer.writeArrayBuffer(bank.buffer as ArrayBuffer);
 
 		// Write the bank switching context
 		const contextString = JSON.stringify(this.bankSwitchingContext);
@@ -757,7 +757,8 @@ export class SimulatedMemory implements Serializable {
 				return this.readHexFromFile(filePath);
 			default: {
 				const romBuffer = fs.readFileSync(filePath);
-				return new Uint8Array(romBuffer.buffer);
+				const romUint8 = Uint8Array.from(romBuffer);
+				return romUint8;
 			}
 		}
 	}
