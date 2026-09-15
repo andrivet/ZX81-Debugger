@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.1 - September 15, 2026
+
+* Fix an issue (debugger does not start) when using a recent version of Visual Studio Code.
+
 ## 2.3.0 - December 29, 2025
 
 * Show the right source code in case of compilation error.
